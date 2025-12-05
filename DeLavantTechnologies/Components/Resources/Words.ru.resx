@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<data name="Counter">
+		<value>Счётчик</value>
+	</data>
+	<data name="Hello">
+		<value>Привет!</value>
+	</data>
+</root>
