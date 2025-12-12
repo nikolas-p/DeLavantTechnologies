@@ -14,4 +14,12 @@
     <PackageReference Include="MongoDB.Driver.Core" Version="2.30.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\javascript\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeLavant.Infrastructure\DeLavant.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

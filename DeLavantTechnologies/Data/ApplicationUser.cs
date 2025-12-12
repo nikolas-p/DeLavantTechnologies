@@ -13,16 +13,18 @@ namespace DeLavantTechnologies.Data
         public string FirstName { get; set; } = "";
         public string MiddleName { get; set; } = "";
 
+        public string? LastLoginTime { get; set; } = "";
+
         /// <summary>
         /// Должности: "Администратор", "Редактор", "Оператор"
         /// </summary>
-        public List<string> Positions { get; set; } = new();
+        //public List<string> Positions { get; set; } = new();
 
         /// <summary>
         /// Права (дополнительные Claims)
         /// edit_users, create_news, delete_news, edit_roles, etc.
         /// </summary>
-        public List<string> Permissions { get; set; } = new();
+        //public List<string> Permissions { get; set; } = new();
 
         
     }

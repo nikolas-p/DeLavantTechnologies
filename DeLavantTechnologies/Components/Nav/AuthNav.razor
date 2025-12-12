@@ -1,0 +1,16 @@
+﻿@inject NavigationManager Nav
+
+<nav class="nav flex-column">
+
+    <a class="nav-link" href="/auth/settings">Настройки</a>
+    <a class="nav-link" href="/auth/courses">Курсы</a>
+
+    <button class="btn btn-danger mt-3" @onclick="GoGuest">
+        Выход
+    </button>
+
+</nav>
+
+@code {
+    void GoGuest() => Nav.NavigateTo("/");
+}

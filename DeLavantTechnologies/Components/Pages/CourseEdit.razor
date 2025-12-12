@@ -1,0 +1,120 @@
+﻿@page "/course/edit"
+@page "/course/edit/{Id}"
+
+@inject ICourseService CourseService
+@inject IStepService StepService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using MongoDB.Bson
+@attribute [Authorize]
+
+<h3>@(IsNew ? "Создание курса" : "Редактирование курса")</h3>
+
+<EditForm Model="@course" OnValidSubmit="SaveCourseAsync" FormName="CourseForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Название курса</label>
+        <InputText class="form-control" @bind-Value="course.Title" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Описание курса</label>
+        <InputTextArea class="form-control" @bind-Value="course.Description" />
+    </div>
+
+    <button class="btn btn-primary mb-3" type="submit">Сохранить курс</button>
+    <button type="button" class="btn btn-secondary mb-3" @onclick="AddStep">Добавить раздел</button>
+
+    @if (courseSteps.Count > 0)
+    {
+        <h4>Разделы курса</h4>
+        @foreach (var step in courseSteps)
+        {
+            <div class="border rounded p-3 mb-2">
+                <StepEdit Step="step" OnStepSaved="SaveStepAsync" OnDeleteStep="RemoveStep" />
+            </div>
+        }
+    }
+</EditForm>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    private Course course { get; set; } = new Course
+    {
+        Title = "",
+        Description = "",
+        Elements = new List<string>(),
+        Access = new List<string>()
+    };
+
+    private List<Step> courseSteps { get; set; } = new List<Step>();
+
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsNew)
+        {
+            var existing = await CourseService.GetCourseByIdAsync(Id);
+            if (existing != null)
+            {
+                course = new Course
+                {
+                    Id = existing.Id,
+                    Title = existing.Title,
+                    Description = existing.Description,
+                    Elements = existing.Elements ?? new List<string>(),
+                    Access = existing.Access ?? new List<string>()
+                };
+
+                if (course.Elements.Count > 0)
+                {
+                    courseSteps = await StepService.GetStepsByIdsAsync(course.Elements);
+                }
+            }
+        }
+    }
+
+    private void AddStep()
+    {
+        var step = new Step { Id = ObjectId.GenerateNewId().ToString() };
+        courseSteps.Add(step);
+        course.Elements.Add(step.Id); // синхронизируем с Elements курса
+    }
+
+    private void RemoveStep(Step step)
+    {
+        courseSteps.Remove(step);
+        course.Elements.Remove(step.Id);
+    }
+
+    private async Task SaveStepAsync(Step step)
+    {
+        // Создание или обновление через сервис StepService
+        if (await StepExists(step.Id))
+            await StepService.UpdateStepAsync(step);
+        else
+            await StepService.CreateStepAsync(step);
+    }
+
+    private async Task<bool> StepExists(string id)
+    {
+        var existing = await StepService.GetStepByIdAsync(id);
+        return existing != null;
+    }
+
+    private async Task SaveCourseAsync()
+    {
+        // Сохраняем курс
+        if (IsNew)
+            await CourseService.CreateCourseAsync(course);
+        else
+            await CourseService.UpdateCourseAsync(course);
+
+        Navigation.NavigateTo("/courses");
+    }
+}

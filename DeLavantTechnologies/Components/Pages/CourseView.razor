@@ -1,0 +1,46 @@
+﻿@page "/course/{Id}"
+@inject ICourseService CourseService
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+<h3>Просмотр курса</h3>
+
+@if (Course is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h2>@Course.Title</h2>
+    <p>@Course.Description</p>
+
+    @if (Course.Elements is not null)
+    {
+        <ul>
+            @foreach (var el in Course.Elements)
+            {
+                <li>@el</li>
+            }
+        </ul>
+    }
+
+    <button class="btn btn-secondary" @onclick="EditCourse">Редактировать</button>
+}
+
+@code {
+    [Parameter] public string Id { get; set; }
+
+    private Course? Course;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allCourses = await CourseService.GetAllCoursesAsync();
+        Course = allCourses.FirstOrDefault(c => c.Id == Id);
+    }
+
+    private void EditCourse()
+    {
+        Navigation.NavigateTo($"/course/edit/{Id}");
+    }
+}

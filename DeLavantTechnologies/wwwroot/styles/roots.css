@@ -1,0 +1,34 @@
+:root {
+    --font-nunito: Nunito;
+
+    --weight-light: 300;
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+    --weight-extrabold: 800;
+    --weight-black: 900;
+}
+
+:root {
+
+  /* === PRIMARY === */
+  --primary-red: #b90844;        /* 185/8/68 */
+  --primary-blue: #004187;       /* 0/65/135 */
+  --primary-green: #008261;      /* 0/130/97 */
+  --primary-gray: #646363;       /* 100/99/99 */
+  --primary-orange: #ea5b0c;     /* 234/91/12 */
+  --primary-purple: #5a348b;     /* 90/52/139 */
+
+  /* === SECONDARY === */
+  --secondary-red: #edc2c3;      /* */
+  --secondary-blue: #009fdd;     /* 0/159/221 */
+  --secondary-orange: #ffc27a;   /* 255/194/122 */
+  --secondary-green: #00953e;    /* 0/149/62 */
+  --secondary-purple: #b59ad9;   /*  */
+  --secondary-gray: #9d9d9c;     /* 157/157/156 */
+
+  /* === BASIC === */
+  --white: #ffffff;
+  --black: #000000;
+}

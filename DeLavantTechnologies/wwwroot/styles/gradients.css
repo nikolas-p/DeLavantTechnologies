@@ -1,0 +1,29 @@
+ :root {
+  /* === PRIMARY TO PRIMARY === */
+  --grbg-pred-porange: linear-gradient(135deg, var(--primary-red), var(--primary-orange));
+  --grbg-pblue-pgreen: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+  --grbg-ppurple-pblue: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+  --grbg-porange-pred: linear-gradient(135deg, var(--primary-red), var(--primary-orange));
+  --grbg-pgreen-pblue: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+  --grbg-pblue-ppurple: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+  
+  /* === PRIMARY TO SECONDARY === */
+  --grbg-pred-sred: linear-gradient(135deg, var(--primary-red), var(--secondary-red));
+  --grbg-pred-sorange: linear-gradient(135deg, var(--primary-red), var(--secondary-orange));
+
+
+
+
+  --grbg-pblue-sblue: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+  --grbg-pgreen-sgreen: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+  --grbg-porange-sorange: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+  --grbg-ppurple-spurple: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+  --grbg-pgray-sgray: linear-gradient(135deg, var(--primary-gray), var(--secondary-gray));
+
+  /* === SECONDARY TO SECONDARY === */
+  
+  --grbg-sgreen-sblue: linear-gradient(135deg, var(--secondary-green), var(--secondary-blue));
+  --grbg-spurple-sblue: linear-gradient(135deg, var(--secondary-purple), var(--secondary-blue));
+  --grbg-sorange-pred: linear-gradient(135deg, var(--secondary-orange), var(--primary-red));
+ }
+

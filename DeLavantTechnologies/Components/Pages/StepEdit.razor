@@ -1,0 +1,47 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@inject ICourseService CourseService
+@inject IStepService StepService
+@rendermode InteractiveServer
+
+<EditForm Model="Step" OnValidSubmit="HandleValidSubmit" FormName="@FormName">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-2">
+        <label class="form-label">Название раздела</label>
+        <InputText class="form-control" @bind-Value="Step.Title" />
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">Описание раздела</label>
+        <InputTextArea class="form-control" @bind-Value="Step.Description" />
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-success btn-sm">Сохранить</button>
+        <button type="button" class="btn btn-danger btn-sm" @onclick="DeleteStep">Удалить</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public Step Step { get; set; } = new Step();
+    [Parameter] public EventCallback<Step> OnStepSaved { get; set; }
+    [Parameter] public EventCallback<Step> OnDeleteStep { get; set; }
+
+    private string FormName => $"StepForm_{Step.Id}";
+
+    private async Task HandleValidSubmit()
+    {
+        
+        if (OnStepSaved.HasDelegate)
+            await OnStepSaved.InvokeAsync(Step);
+
+        Console.WriteLine($"save step {Step.Id}");
+    }
+
+    private async Task DeleteStep()
+    {
+        if (OnDeleteStep.HasDelegate)
+            await OnDeleteStep.InvokeAsync(Step);
+    }
+}

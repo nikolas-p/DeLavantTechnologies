@@ -1,0 +1,16 @@
+﻿@using Microsoft.AspNetCore.Components
+@inject NavigationManager Nav
+
+<nav class="navbar navbar-expand bg-dark navbar-dark px-3">
+    <a class="navbar-brand" href="/">Site</a>
+
+    <div class="ms-auto">
+        <button class="" @onclick="GoAuth">Войти</button>
+    </div>
+</nav>
+
+
+@code {
+    // void GoAuth() => Nav.NavigateTo("/auth");
+    void GoAuth() => Console.WriteLine("clicked");
+}

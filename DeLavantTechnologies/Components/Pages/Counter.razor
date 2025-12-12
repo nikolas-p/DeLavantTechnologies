@@ -9,11 +9,15 @@
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
+<InputCheckbox @bind-Value="isOdd" />
+
 @code {
+    private bool isOdd;
     private int currentCount = 0;
 
     private void IncrementCount()
     {
         currentCount++;
+        isOdd = currentCount % 2 != 0;
     }
 }

@@ -1,14 +1,22 @@
+using DeLavant.Application;
 using DeLavantTechnologies.Components;
 using DeLavantTechnologies.Components.Account;
 using DeLavantTechnologies.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using DeLavant.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddApplication();
+
+builder.Services.AddInfrastructure(builder.Configuration);
+
+
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -71,12 +79,13 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
     string[] roles =
-    {
-        "Admin",
-        "NewsEditor",
-        "CatalogEditor",
-        "User"
-    };
+{
+    "Admin",
+    "Ones",
+    "Guest",
+    "User"
+};
+
 
     foreach (var role in roles)
     {
