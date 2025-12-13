@@ -1,5 +1,6 @@
 ﻿using DeLavant.Domain.Courses;
 using DeLavant.Domain.Steps;
+using DeLavant.Domain.Tests;
 using DeLavant.Infrastructure.Mongo;
 using DeLavant.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,10 @@ namespace DeLavant.Infrastructure
 
             services.AddScoped<ICourseRepository, CourseRepository>();
             services.AddScoped<IStepRepository, StepRepository>();
+            services.AddScoped<ITestRepository, TestRepository>();
+            services.AddScoped<IQuestionRepository, QuestionRepository>();
+
+
             return services;
         }
     }

@@ -11,13 +11,8 @@ namespace DeLavant.Domain.Courses
     public class Course : ContentItem
     {
        
-       
-
-
-        [BsonElement("elements")]
         public List<string>? Elements { get; set; }
-
-        [BsonElement("access")]
+        public string? AccessType { get; set; }
         public List<string>? Access {  get; set; }
     }
 }

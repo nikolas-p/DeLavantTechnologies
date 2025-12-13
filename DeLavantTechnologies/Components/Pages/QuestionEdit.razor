@@ -1,0 +1,18 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@inject ITestService TestService
+@inject IQuestionService QuestionService
+@rendermode InteractiveServer
+<h3>TestEdit</h3>
+
+
+<h3>QuestionEdit</h3>
+
+
+
+@code {
+	[Parameter] public Question Question { get; set; } = new Question();
+	[Parameter] public EventCallback<Question> OnQuestionSaved { get; set; }
+	[Parameter] public EventCallback<Question> OnDeleteQuestion { get; set; }
+
+	private string FormName => $"QuestionForm_{Question.Id}";
+}

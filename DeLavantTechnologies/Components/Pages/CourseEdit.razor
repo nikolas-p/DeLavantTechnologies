@@ -1,8 +1,9 @@
 ﻿@page "/course/edit"
 @page "/course/edit/{Id}"
-
 @inject ICourseService CourseService
 @inject IStepService StepService
+@inject ITestService TestService
+@inject IQuestionService QuestionService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
@@ -11,30 +12,37 @@
 
 <h3>@(IsNew ? "Создание курса" : "Редактирование курса")</h3>
 
-<EditForm Model="@course" OnValidSubmit="SaveCourseAsync" FormName="CourseForm">
+<EditForm Model="@Course" OnValidSubmit="SaveCourse" FormName="CourseForm">
+
+     <div class="mb-3">
+        <button class="btn btn-primary" type="submit">Сохранить курс</button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="AddStep">Добавить раздел</button>
+    </div>
+
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="mb-3">
         <label class="form-label">Название курса</label>
-        <InputText class="form-control" @bind-Value="course.Title" />
+        <InputText class="form-control" @bind-Value="Course.Title" />
     </div>
 
     <div class="mb-3">
         <label class="form-label">Описание курса</label>
-        <InputTextArea class="form-control" @bind-Value="course.Description" />
+        <InputTextArea class="form-control" @bind-Value="Course.Description" />
     </div>
 
-    <button class="btn btn-primary mb-3" type="submit">Сохранить курс</button>
-    <button type="button" class="btn btn-secondary mb-3" @onclick="AddStep">Добавить раздел</button>
+    <hr />
 
-    @if (courseSteps.Count > 0)
+    @if (Steps.Any())
     {
         <h4>Разделы курса</h4>
-        @foreach (var step in courseSteps)
+        @foreach (var step in Steps)
         {
             <div class="border rounded p-3 mb-2">
-                <StepEdit Step="step" OnStepSaved="SaveStepAsync" OnDeleteStep="RemoveStep" />
+                <StepEdit Step="@step"
+                          OnStepUpdated="SaveStep"
+                          OnStepDeleted="DeleteStep" />
             </div>
         }
     }
@@ -43,15 +51,15 @@
 @code {
     [Parameter] public string? Id { get; set; }
 
-    private Course course { get; set; } = new Course
-    {
-        Title = "",
-        Description = "",
-        Elements = new List<string>(),
-        Access = new List<string>()
-    };
+    private Course Course { get; set; } = new Course
+        {
+            Title = "",
+            Description = "",
+            Elements = new List<string>(),
+            Access = new List<string>()
+        };
 
-    private List<Step> courseSteps { get; set; } = new List<Step>();
+    private List<Step> Steps { get; set; } = new();
 
     private bool IsNew => string.IsNullOrEmpty(Id);
 
@@ -59,62 +67,212 @@
     {
         if (!IsNew)
         {
-            var existing = await CourseService.GetCourseByIdAsync(Id);
-            if (existing != null)
+            var courseTask = CourseService.GetCourseByIdAsync(Id);
+            await courseTask;
+            if (courseTask.Result != null)
             {
-                course = new Course
-                {
-                    Id = existing.Id,
-                    Title = existing.Title,
-                    Description = existing.Description,
-                    Elements = existing.Elements ?? new List<string>(),
-                    Access = existing.Access ?? new List<string>()
-                };
+                Course = courseTask.Result;
+                Course.Elements ??= new List<string>();
 
-                if (course.Elements.Count > 0)
-                {
-                    courseSteps = await StepService.GetStepsByIdsAsync(course.Elements);
-                }
+                // Получаем шаги только если есть элементы
+                if (Course.Elements.Count > 0)
+                    Steps = await StepService.GetStepsByIdsAsync(Course.Elements);
             }
         }
     }
 
-    private void AddStep()
+    private async Task AddStep()
     {
-        var step = new Step { Id = ObjectId.GenerateNewId().ToString() };
-        courseSteps.Add(step);
-        course.Elements.Add(step.Id); // синхронизируем с Elements курса
+        var step = new Step();
+        Steps.Add(step);
+
+        Course.Elements ??= new List<string>();
+        Course.Elements.Add(step.Id);
+
+        // Сохраняем новый шаг в базе
+        await StepService.CreateStepAsync(step);
     }
 
-    private void RemoveStep(Step step)
-    {
-        courseSteps.Remove(step);
-        course.Elements.Remove(step.Id);
-    }
 
-    private async Task SaveStepAsync(Step step)
+    private async Task SaveStep(Step step)
     {
-        // Создание или обновление через сервис StepService
-        if (await StepExists(step.Id))
+        if (Steps.Any(s => s.Id == step.Id))
             await StepService.UpdateStepAsync(step);
         else
             await StepService.CreateStepAsync(step);
     }
 
-    private async Task<bool> StepExists(string id)
+    private async Task DeleteStep(Step step)
     {
-        var existing = await StepService.GetStepByIdAsync(id);
-        return existing != null;
+        // 1. Удаляем все элементы шага
+        foreach (var el in step.Elements)
+        {
+            if (el.IsTest)
+            {
+                // Получаем тест
+                var test = await TestService.GetTestByIdAsync(el.Id);
+                if (test != null)
+                {
+                    // Удаляем все вопросы теста
+                    if (test.Questions != null)
+                    {
+                        foreach (var qid in test.Questions)
+                        {
+                            await QuestionService.DeleteQuestionAsync(qid);
+                        }
+                    }
+
+                    // Удаляем тест
+                    await TestService.DeleteTestAsync(el.Id);
+                }
+            }
+            else
+            {
+                // Если лекция — удаляем через LectureService
+                // await LectureService.DeleteLectureAsync(el.Id);
+            }
+        }
+
+        // 2. Удаляем сам Step
+        Steps.Remove(step);
+        Course.Elements?.Remove(step.Id);
+        await StepService.DeleteStepAsync(step.Id);
     }
 
-    private async Task SaveCourseAsync()
-    {
-        // Сохраняем курс
-        if (IsNew)
-            await CourseService.CreateCourseAsync(course);
-        else
-            await CourseService.UpdateCourseAsync(course);
 
+    private async Task SaveCourse()
+    {
+        // 1. Сохраняем все Steps
+        foreach (var step in Steps)
+        {
+            // Сохраняем все элементы Step
+            foreach (var el in step.Elements)
+            {
+                if (el.IsTest)
+                {
+                    // Получаем тест из базы или создаем новый
+                    Test test;
+                    if (!string.IsNullOrEmpty(el.Id))
+                    {
+                        test = await TestService.GetTestByIdAsync(el.Id) ?? new Test();
+                    }
+                    else
+                    {
+                        test = new Test();
+                        el.Id = test.Id;
+                    }
+
+                    // Сохраняем вопросы теста
+                    if (test.Questions != null)
+                    {
+                        for (int i = 0; i < test.Questions.Count; i++)
+                        {
+                            var questionId = test.Questions[i];
+                            Question q;
+
+                            if (!string.IsNullOrEmpty(questionId))
+                            {
+                                q = await QuestionService.GetQuestionByIdAsync(questionId) ?? new Question();
+                                q.Id = questionId;
+                            }
+                            else
+                            {
+                                q = new Question();
+                                q.Id = ObjectId.GenerateNewId().ToString();
+                                test.Questions[i] = q.Id; // сохраняем ссылку в тесте
+                            }
+
+                            // Если Answers == null
+                            q.Answers ??= new List<Answer>();
+
+                            // Сохраняем вопрос
+                            if (string.IsNullOrEmpty(questionId))
+                                await QuestionService.CreateQuestionAsync(q);
+                            else
+                                await QuestionService.UpdateQuestionAsync(q);
+                        }
+                    }
+                    else
+                    {
+                        test.Questions = new List<string>();
+                    }
+
+                    // Сохраняем сам тест
+                    if (string.IsNullOrEmpty(el.Id))
+                        await TestService.CreateTestAsync(test);
+                    else
+                        await TestService.UpdateTestAsyc(test);
+                }
+                else
+                {
+                    // Лекции можно добавить аналогично
+                    // var lecture = await LectureService.GetLectureByIdAsync(el.Id);
+                    // if (lecture != null) await LectureService.UpdateLectureAsync(lecture);
+                }
+            }
+
+            // 2. Сохраняем Step
+            if (string.IsNullOrEmpty(step.Id))
+            {
+                step.Id = ObjectId.GenerateNewId().ToString();
+                await StepService.CreateStepAsync(step);
+
+                Course.Elements ??= new List<string>();
+                Course.Elements.Add(step.Id); // добавляем в курс
+            }
+            else
+            {
+                await StepService.UpdateStepAsync(step);
+            }
+        }
+
+        // 3. Удаляем Step, которых нет в списке Steps
+        if (Course.Elements != null)
+        {
+            var existingStepIds = Steps.Select(s => s.Id).ToList();
+            var removedIds = Course.Elements.Where(id => !existingStepIds.Contains(id)).ToList();
+
+            foreach (var removedId in removedIds)
+            {
+                // Удаляем Step и все его элементы
+                var stepToDelete = await StepService.GetStepByIdAsync(removedId);
+                if (stepToDelete != null)
+                {
+                    foreach (var el in stepToDelete.Elements)
+                    {
+                        if (el.IsTest)
+                        {
+                            var test = await TestService.GetTestByIdAsync(el.Id);
+                            if (test?.Questions != null)
+                            {
+                                foreach (var qId in test.Questions)
+                                    await QuestionService.DeleteQuestionAsync(qId);
+                            }
+                            if (test != null)
+                                await TestService.DeleteTestAsync(el.Id);
+                        }
+                        else
+                        {
+                            // Удаляем лекцию
+                            // await LectureService.DeleteLectureAsync(el.Id);
+                        }
+                    }
+                }
+
+                await StepService.DeleteStepAsync(removedId);
+                Course.Elements.Remove(removedId);
+            }
+        }
+
+        // 4. Сохраняем сам курс
+        if (IsNew)
+            await CourseService.CreateCourseAsync(Course);
+        else
+            await CourseService.UpdateCourseAsync(Course);
+
+        // 5. Навигация обратно к списку
         Navigation.NavigateTo("/courses");
     }
+
+
 }

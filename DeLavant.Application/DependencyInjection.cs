@@ -18,6 +18,7 @@ namespace DeLavant.Application
             services.AddScoped<ILectureService, LectureService>();
             services.AddScoped<IMediaFileService, MediaFileService>();
             services.AddScoped<ITestService, TestService>();
+            services.AddScoped<IQuestionService, QuestionService>();
 
             return services;
         }

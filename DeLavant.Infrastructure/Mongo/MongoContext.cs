@@ -26,6 +26,7 @@ namespace DeLavant.Infrastructure.Mongo
         public IMongoCollection<Course> Courses => Database.GetCollection<Course>("Courses");
         public IMongoCollection<Step> Steps => Database.GetCollection<Step>("Steps");
         public IMongoCollection<Test> Tests => Database.GetCollection<Test>("Tests");
+        public IMongoCollection<Question> Questions => Database.GetCollection<Question>("Question");
         public IMongoCollection<Lecture> Lectures => Database.GetCollection<Lecture>("Lectures");
         //public IMongoCollection<UserAnswer> UserAnswers => Database.GetCollection<UserAnswer>("UserAnswers");
     }

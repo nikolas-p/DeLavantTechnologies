@@ -1,0 +1,20 @@
+﻿@using DeLavant.Domain.Tests
+
+<DynamicComponent Type="Resolve()"
+                  Parameters="@(new Dictionary<string, object?>
+    {
+        ["Question"] = Question
+    })" />
+
+@code {
+    [Parameter] public Question Question { get; set; }
+
+    private Type Resolve() => Question.Type switch
+    {
+        "one" => typeof(QuestionOneEdit),
+        "many" => typeof(QuestionManyEdit),
+        "note" => typeof(QuestionNoteEdit),
+        "step" => typeof(QuestionStepEdit)
+       
+    };
+}

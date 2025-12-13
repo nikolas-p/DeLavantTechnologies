@@ -3,8 +3,8 @@
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
-
 @attribute [Authorize]
+
 
 <h3>Courses</h3>
 
@@ -73,3 +73,4 @@ else
         courses = await CourseService.GetAllCoursesAsync();
     }
 }
+ 

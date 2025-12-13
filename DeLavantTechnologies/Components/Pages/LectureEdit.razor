@@ -1,0 +1,15 @@
+﻿@* @inject ILectureService LectureService *@
+
+<h1> Лекция с @Id </h1>
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    // private Lecture lecture = new Lecture();
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     if (!string.IsNullOrEmpty(Id))
+    //     {
+    //         lecture = await LectureService.GetLectureByIdAsync(Id) ?? new Lecture();
+    //     }
+    // }
+}

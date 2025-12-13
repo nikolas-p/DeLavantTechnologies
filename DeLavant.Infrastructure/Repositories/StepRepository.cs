@@ -26,17 +26,13 @@ namespace DeLavant.Infrastructure.Repositories
             return await _collection.Find(filter).ToListAsync();
         }
 
-        public Task<Step?> GetStepByIdAsync(string id)
-            => GetByIdAsync(id);
+        public Task<Step?> GetStepByIdAsync(string id)  => GetByIdAsync(id);
 
-        public Task CreateStepAsync(Step step)
-            => CreateAsync(step);
+        public Task CreateStepAsync(Step step) => CreateAsync(step);
 
-        public Task UpdateStepAsync(Step step)
-            => UpdateAsync(step);
+        public Task UpdateStepAsync(Step step) => UpdateAsync(step);
 
-        public Task DeleteStepAsync(string id)
-            => DeleteAsync(id);
+        public Task DeleteStepAsync(string id) => DeleteAsync(id);
     }
 
 }

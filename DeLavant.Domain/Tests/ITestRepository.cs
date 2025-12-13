@@ -9,7 +9,7 @@ namespace DeLavant.Domain.Tests
 {
     public interface ITestRepository
     {
-        Task<List<Test>> GetTestsByListIdsAsync(List<string> TestIds);
+        Task<List<Test>> GetTestsByIdsAsync(List<string> TestIds);
         Task<Test?> GetTestByIdAsync(string id);
         Task CreateTestAsync(Test test);
         Task UpdateTestAsync(Test test);
@@ -17,8 +17,8 @@ namespace DeLavant.Domain.Tests
     }
     public interface IQuestionRepository
     {
-        Task<List<Question>> GetQuestionByListIdsAsync(List<string> QuestionIds);
-        Task<Lecture?> GetQuestionByIdAsync(string id);
+        Task<List<Question>> GetQuestionsByIdsAsync(List<string> QuestionIds);
+        Task<Question?> GetQuestionByIdAsync(string id);
         Task CreateQuestionAsync(Question question);
         Task UpdateQuestionAsync(Question question);
         Task DeleteQuestionAsync(string id);

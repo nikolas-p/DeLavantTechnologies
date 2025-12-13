@@ -1,0 +1,42 @@
+﻿@using MongoDB.Bson
+@rendermode InteractiveServer
+
+<h5>Вопрос с одним ответом</h5>
+
+<label>Текст вопроса</label>
+<InputText class="form-control" @bind-Value="Question.Title" />
+
+@if (Question.Answers == null || Question.Answers.Count == 0)
+{
+    <p>Ответы отсутствуют</p>
+}
+else
+{
+    @foreach (var answer in Question.Answers)
+    {
+        <div class="input-group mt-2" @key="answer.Id">
+            <InputCheckbox @bind-Value="answer.IsCorrect" class="form-check-input" />
+            <InputText class="form-control" @bind-Value="answer.Value" />
+            <button>x</button> - чтобы удалить 
+        </div>
+    }
+}
+
+<button class="btn btn-primary btn-sm mt-2" type="button" @onclick="AddAnswer">Добавить ответ</button>
+
+@code {
+    [Parameter] public Question Question { get; set; } = new Question { Answers = new List<Answer>() };
+
+    private void AddAnswer()
+    {
+        if (Question.Answers == null)
+            Question.Answers = new List<Answer>();
+
+        Question.Answers.Add(new Answer
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Value = "",
+                IsCorrect = false
+            });
+    }
+}

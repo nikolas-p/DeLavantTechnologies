@@ -1,5 +1,143 @@
-﻿<h3>TestEdit</h3>
+﻿@inject ITestService TestService
+@inject IQuestionService QuestionService
+@inject NavigationManager Navigation
+@using MongoDB.Bson
+@using DeLavant.Domain.Tests
+@rendermode InteractiveServer
+
+<h3>Редактирование теста</h3>
+
+<EditForm Model="@Test" OnValidSubmit="SaveTest" FormName="@formName">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Название теста</label>
+        <InputText class="form-control" @bind-Value="Test.Title" />
+    </div>
+
+    <div class="mb-3">
+        <label>Описание теста</label>
+        <InputTextArea class="form-control" @bind-Value="Test.Description" />
+    </div>
+
+    <div class="mb-3">
+        <button class="btn btn-success me-2" type="submit">
+            Сохранить тест
+        </button>
+
+        <button class="btn btn-danger me-2" type="button" @onclick="DeleteTest">
+            Удалить тест
+        </button>
+
+        <button class="btn btn-secondary" type="button" @onclick="AddOne">Вопрос (один)</button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="AddMany">Вопрос (много)</button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="AddNote">Вопрос с заметкой</button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="AddStep">Вопрос по шагам</button>
+    </div>
+
+    <hr />
+
+    @if (Questions.Any())
+    {
+        <h5>Вопросы теста</h5>
+        @foreach (var q in Questions)
+        {
+            <div class="border rounded p-3 mb-2">
+                <TestQuestionRouter Question="@q" />
+            </div>
+        }
+    }
+</EditForm>
 
 @code {
+    [Parameter] public string Id { get; set; }
+       
+       
 
+        [Parameter] public EventCallback<string> OnDeleted { get; set; }
+
+    private Test Test = new();
+    private List<Question> Questions = new();
+    private string formName => $"TestForm_{Test.Id}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(Id))
+        {
+            Test = await TestService.GetTestByIdAsync(Id) ?? new Test();
+            Test.Questions ??= new List<string>();
+
+            if (Test.Questions.Any())
+                Questions = await QuestionService.GetQuestionsByIdsAsync(Test.Questions);
+        }
+    }
+
+    private async Task SaveTest()
+    {
+        // 1. Сохраняем вопросы
+        foreach (var q in Questions)
+        {
+            if (await QuestionService.GetQuestionByIdAsync(q.Id) != null)
+                await QuestionService.UpdateQuestionAsync(q);
+            else
+                await QuestionService.CreateQuestionAsync(q);
+        }
+
+        // 2. Синхронизируем список ID
+        Test.Questions = Questions.Select(q => q.Id).ToList();
+
+        // 3. Сохраняем тест
+        if (string.IsNullOrEmpty(Test.Id))
+            await TestService.CreateTestAsync(Test);
+        else
+            await TestService.UpdateTestAsyc(Test);
+
+        Console.WriteLine($"изменения в тесте {Test.Id} применены");
+    }
+
+    /// <summary>
+    /// ❌ Удаление теста и всех связанных вопросов
+    /// </summary>
+    private async Task DeleteTest()
+    {
+        if (string.IsNullOrEmpty(Test.Id))
+            return;
+
+        // 1. Удаляем вопросы
+        if (Test.Questions != null)
+        {
+            foreach (var qId in Test.Questions)
+                await QuestionService.DeleteQuestionAsync(qId);
+        }
+
+        // 2. Удаляем тест
+        await TestService.DeleteTestAsync(Test.Id);
+
+        Console.WriteLine($"тест {Test.Id} удалён");
+
+        // 3. Сообщаем родителю
+        await OnDeleted.InvokeAsync(Test.Id);
+    }
+
+
+    private void AddOne() => AddQuestion("one");
+    private void AddMany() => AddQuestion("many");
+    private void AddNote() => AddQuestion("note");
+    private void AddStep() => AddQuestion("step");
+
+    private void AddQuestion(string type)
+    {
+        var q = new Question
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Type = type,
+                Answers = new List<Answer>()
+            };
+
+        Questions.Add(q);
+
+        Test.Questions ??= new List<string>();
+        Test.Questions.Add(q.Id);
+    }
 }
