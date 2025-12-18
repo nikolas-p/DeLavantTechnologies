@@ -1,16 +1,63 @@
-﻿@inject NavigationManager Nav
+﻿@using DeLavantTechnologies.Data
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager NavigationManager
+@inject UiState Ui
 
-<nav class="nav flex-column">
+<nav class="nav-panel">
+    <AuthorizeView>
+        <Authorized>
+            @if (context.User.IsInRole("Admin"))
+            {
+                @foreach (var entity in new[]
+              {
+                    EntityType.Courses,
+                    EntityType.Users,
+                    EntityType.Projects,
+                    EntityType.Home
+                })
+                {
+                    var info = EntityNavDefinitions.EntityNavMap[entity];
 
-    <a class="nav-link" href="/auth/settings">Настройки</a>
-    <a class="nav-link" href="/auth/courses">Курсы</a>
+                    <div class="nav-link" style="@info.Style" @onclick="() => Select(entity)" >
+                        <span class="square-icon @info.IconClass"></span>
+                        <span class="nav-text">@info.Title</span>
+                    </div>
 
-    <button class="btn btn-danger mt-3" @onclick="GoGuest">
-        Выход
-    </button>
+                }
 
+                <div class="nav-link" style="--gradient: var(--primary-gray);">
+                    <span class="square-icon gear-fill-icon"></span>
+                    <span class="nav-text">@context.User.Identity?.Name</span>
+                </div>
+            }
+
+            @{
+                var destination = EntityNavDefinitions.EntityNavMap[EntityType.DestinationCourses];
+
+                <div class="nav-link" style="@destination.Style" @onclick="() => Select(EntityType.DestinationCourses)">
+                    <span class="square-icon @destination.IconClass"></span>
+                    <span class="nav-text">@destination.Title</span>
+                </div>
+            }
+
+            <form action="Account/Logout" method="post">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <button type="submit" class="nav-link" style="--gradient: var(--primary-red);">
+                    <span class="square-icon box-arrow-left-icon"></span>
+                    <span class="nav-text">Выйти</span>
+                </button>
+            </form>
+        </Authorized>
+    </AuthorizeView>
 </nav>
 
 @code {
-    void GoGuest() => Nav.NavigateTo("/");
+    void Select(EntityType entity)
+    {
+        Ui.SelectEntity(entity);
+       
+    }
+
+    private string? currentUrl = "";
 }

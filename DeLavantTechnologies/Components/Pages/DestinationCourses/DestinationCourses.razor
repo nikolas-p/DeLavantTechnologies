@@ -1,0 +1,45 @@
+﻿@rendermode InteractiveServer
+@implements IEntityListPage
+
+<h3>DestinationCourses</h3>
+
+
+
+<h3>Текущий поиск</h3>
+<p>@Search</p>
+
+<h3>Параметры фильтров</h3>
+@if (Parameters != null && Parameters.Count > 0)
+{
+    <ul>
+        @foreach (var kvp in Parameters)
+        {
+            <li>
+                @kvp.Key :
+                @if (kvp.Value is IEnumerable<string> list)
+                {
+                    @string.Join(", ", list)
+                }
+                else
+                {
+                    @kvp.Value
+                }
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Нет параметров</p>
+}
+
+@code {
+    [Parameter] public string Search { get; set; } = "";
+    [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+
+   
+}
+
+@code {
+
+}

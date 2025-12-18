@@ -1,0 +1,90 @@
+﻿@using DeLavantTechnologies.Data
+@inject UiState Ui
+
+<h3>Фильтры курсов</h3>
+
+<!-- Радио сортировки через enum -->
+<label>Сортировка:</label>
+<InputRadioGroup @bind-Value="SortOrder">
+    <label>
+        <InputRadio Value="CourseOrder.NewFirst" /> Сначала новые
+    </label>
+    <label>
+        <InputRadio Value="CourseOrder.OldFirst" /> Сначала старые
+    </label>
+    <label>
+        <InputRadio Value="CourseOrder.AZName" /> По названию: А → Я
+    </label>
+    <label>
+        <InputRadio Value="CourseOrder.ZAName" /> По названию: Я → А
+    </label>
+</InputRadioGroup>
+@code {
+    // Enum для сортировки
+    public enum CourseOrder
+    {
+        NewFirst,
+        OldFirst,
+        AZName,
+        ZAName
+    }
+
+    // Свойство для биндa
+    private CourseOrder SortOrder
+    {
+        get
+        {
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var value) && value is CourseOrder order)
+                return order;
+            return CourseOrder.NewFirst;
+        }
+        set => Ui.SetParam("order", value);
+    }
+
+    
+}
+
+
+<!-- Чекбоксы категорий -->
+<label>Категории:</label>
+@foreach (var category in CourseCategories)
+{
+    <div>
+        <input type="checkbox"
+               checked="@IsCategorySelected(category)"
+               @onchange="(e) => ToggleCategory(category, e.Value)">
+        @category
+    </div>
+}
+@code{
+    // Пример категорий
+    private string[] CourseCategories = new[] { "Test check 1", "Test check 2", "Test check 3", "Test check 4" };
+
+    // Проверка, выбран ли чекбокс
+    private bool IsCategorySelected(string category)
+    {
+        if (Ui.CurrentState.Parameters.TryGetValue("categories", out var obj) && obj is HashSet<string> set)
+        {
+            return set.Contains(category);
+        }
+        return false;
+    }
+
+    // Переключение чекбокса
+    private void ToggleCategory(string category, object? isCheckedObj)
+    {
+        var isChecked = isCheckedObj as bool? ?? false;
+
+        if (!Ui.CurrentState.Parameters.TryGetValue("categories", out var obj) || obj is not HashSet<string> set)
+        {
+            set = new HashSet<string>();
+        }
+
+        if (isChecked)
+            set.Add(category);
+        else
+            set.Remove(category);
+
+        Ui.SetParam("categories", set);
+    }
+}

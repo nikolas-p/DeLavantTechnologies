@@ -1,0 +1,227 @@
+.title {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4rem;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 18px;
+    z-index: 100;
+
+    background-color: rgba(143,143,143,0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+}
+
+/* Общие блоки */
+.toolbar-block {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Левый */
+.toolbar-block.left {
+    margin-left: 2rem;
+    justify-content: flex-start;
+}
+
+/* Правый */
+.toolbar-block.right {
+    margin-right: 2rem;
+    margin-left: auto;
+    justify-content: flex-end;
+}
+
+/* ЦЕНТР — АБСОЛЮТНО */
+.toolbar-block.center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    justify-content: center;
+}
+
+
+.square-button-small {
+    width: 2rem;
+    height: 2rem;
+}
+.square-button {
+    width: 3rem;
+    height: 3rem;
+}
+.circle-button
+{
+    width: 2rem;
+    height: 2rem;
+}
+.circle-button, 
+.square-button,
+.square-button-small
+{
+    border: none;
+    padding: 0;
+    background-color: currentColor; /* цвет SVG */
+
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    /* mask общие */
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+.square-button, .circle-button, .square-button-small {
+    transition:
+        transform 0.15s cubic-bezier(.4, 0, .2, 1),
+        background-color 0.2s ease;
+}
+
+.square-button:active, .circle-button:active, .square-button-small:active {
+    transform: scale(0.88);
+}
+
+.search 
+{
+    display: flex;
+    align-items: center;
+
+    width: 50rem;
+    height: 3rem;
+   
+    background: #F2F2F2;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 25px;
+
+      transition:
+        transform 0.15s cubic-bezier(.4, 0, .2, 1),
+        opacity 0.15s cubic-bezier(.4, 0, .2, 1);
+}
+
+.search-visible {
+     opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.search-hidden {
+    opacity: 0;
+   
+}
+.search-input {
+    margin-left: 1rem;
+    flex: 1;
+    height: 100%;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 1.5rem;
+    color: #888888;
+
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-extrabold);
+}
+
+.search-clear-button {
+    margin-right: 1rem;
+    flex-shrink: 0;
+
+    width: 2rem;
+    height: 2rem;
+
+    border: none;
+    padding: 0;
+    border-radius: 50%;
+   
+    background-color: #000; /* цвет иконки */
+
+    cursor: pointer;
+
+    mask-size: 1.5rem 1.5rem;
+    mask-repeat: no-repeat;
+    mask-position: center;
+
+    -webkit-mask-size: 1.5rem 1.5rem;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+
+    opacity: 0;
+    transform: scale(0.6);
+    pointer-events: none;
+
+    transition:
+        transform 0.15s cubic-bezier(.4, 0, .2, 1),
+        opacity 0.15s cubic-bezier(.4, 0, .2, 1);
+
+}
+.search-clear-button.show {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+.search-clear-button:active {
+    transform: scale(0.8);
+}
+
+
+
+
+.toolbar-block.left .nav-link {
+    padding: 0;              /* padding = 0 */
+    margin: 0;               /* margin = 0 */
+    gap: 0.5rem;
+
+    background: none;
+    border-radius: 0;
+    width: auto;
+
+    /* цвет сразу активный */
+    color: var(--gradient);
+
+    /* убираем анимации */
+    transition: none;
+}
+
+/* отключаем hover полностью */
+.toolbar-block.left .nav-link:hover {
+    background: none;
+}
+
+.toolbar-block.left .nav-link:hover .nav-text {
+    background: none;
+    color: var(--gradient);
+}
+
+/* Квадрат меньше */
+.toolbar-block.left .square-icon {
+    width: 3rem;
+    height: 3rem;
+    min-width: 2rem;
+    border-radius: 0.8rem;
+}
+
+/* Иконка внутри квадрата */
+.toolbar-block.left .square-icon::after {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Текст меньше */
+.toolbar-block.left .nav-text {
+    font-size: 2rem;
+    line-height: 2rem;
+}

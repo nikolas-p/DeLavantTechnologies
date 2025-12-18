@@ -11,24 +11,62 @@
 }
 
 :root {
+    /* === PRIMARY === */
+    --primary-red: #b90844; /* 185/8/68 */
+    --primary-blue: #004187; /* 0/65/135 */
+    --primary-green: #008261; /* 0/130/97 */
+    --primary-gray: #646363; /* 100/99/99 */
+    --primary-orange: #ea5b0c; /* 234/91/12 */
+    --primary-purple: #6155F5; /* 90/52/139 */
+    /* === SECONDARY === */
+    --secondary-red: #edc2c3; /* */
+    --secondary-blue: #0088FF; /* 0/159/221 */
+    --secondary-orange: #FF8D28; /* 255/194/122 */
+    --secondary-green: #34C759; /* 0/149/62 */
+    --secondary-purple: #b59ad9; /*  */
+    --secondary-gray: #9d9d9c; /* 157/157/156 */
+    --secondary-pink: #FF2D55;
+    /* === BASIC === */
+    --white: #ffffff;
+    --black: #000000;
+}
 
-  /* === PRIMARY === */
-  --primary-red: #b90844;        /* 185/8/68 */
-  --primary-blue: #004187;       /* 0/65/135 */
-  --primary-green: #008261;      /* 0/130/97 */
-  --primary-gray: #646363;       /* 100/99/99 */
-  --primary-orange: #ea5b0c;     /* 234/91/12 */
-  --primary-purple: #5a348b;     /* 90/52/139 */
-
-  /* === SECONDARY === */
-  --secondary-red: #edc2c3;      /* */
-  --secondary-blue: #009fdd;     /* 0/159/221 */
-  --secondary-orange: #ffc27a;   /* 255/194/122 */
-  --secondary-green: #00953e;    /* 0/149/62 */
-  --secondary-purple: #b59ad9;   /*  */
-  --secondary-gray: #9d9d9c;     /* 157/157/156 */
-
-  /* === BASIC === */
-  --white: #ffffff;
-  --black: #000000;
+.primary-red {
+    color: var(--primary-red, #b90844);
+}
+.primary-blue {
+    color: var(--primary-blue, #004187);
+}
+.primary-green {
+    color: var(--primary-green, #008261);
+}
+.primary-gray {
+    color: var(--primary-gray, #646363);
+}
+.primary-orange {
+    color: var(--primary-orange, #ea5b0c);
+}
+.primary-purple {
+    color: var(--primary-purple, #6155F5);
+}
+.secondary-red {
+    color: var(--secondary-red, #edc2c3);
+}
+.secondary-blue {
+    color: var(--secondary-blue, #0088FF);
+}
+.secondary-orange {
+    color: var(--secondary-orange, #FF8D28);
+}
+.secondary-green {
+    color: var(--secondary-green, #34C759);
+}
+.secondary-purple {
+    color: var(--secondary-purple, #b59ad9);
+}
+.secondary-gray {
+    color: var(--secondary-gray, #9d9d9c);
+}
+.secondary-pink {
+    color: var(--secondary-pink, #FF2D55);
 }

@@ -1,0 +1,42 @@
+﻿@page "/Auth"
+@using DeLavantTechnologies.Components.AuthComponents
+@using DeLavantTechnologies.Components.Nav
+@using DeLavantTechnologies.Data
+@inject UiState Ui
+@rendermode InteractiveServer
+@layout AuthLayout
+
+
+<div class="auth-layout">
+
+    @if (Ui.Mode == PageMode.List)
+    {
+        
+         <AuthToolbar />
+        
+        <aside class="side-panel left @(Ui.ShowLeft ? "open" : "")">
+            <AuthNav />
+        </aside>
+
+        <aside class="side-panel right @(Ui.ShowRight ? "open" : "")">
+            <AsideEntityRouter />
+        </aside>
+
+        <main role="main" class="auth-shell-content">
+            <AuthContentRouter/>
+        </main>
+    }
+
+  
+
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+        => Ui.Changed += StateHasChanged;
+
+    public void Dispose()
+        => Ui.Changed -= StateHasChanged;
+}

@@ -10,8 +10,9 @@ namespace DeLavant.Domain.Courses
 {
     public class Course : ContentItem
     {
-       
         public List<string>? Elements { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime LastUpdatedAt { get; set; }
         public string? AccessType { get; set; }
         public List<string>? Access {  get; set; }
     }

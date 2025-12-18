@@ -5,57 +5,70 @@
 @using DeLavant.Domain.Tests
 @rendermode InteractiveServer
 
-<h3>Редактирование теста</h3>
-
+<div class="item-content">
 <EditForm Model="@Test" OnValidSubmit="SaveTest" FormName="@formName">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+  
+    <!-- HEADER -->
+    <div class="item-content-header">
+        <div class="item-content-header-left">
+            <button class="circle-button primary-red x-circle-fill-icon" type="button" @onclick="DeleteTest">
+            </button>
+        </div>
 
-    <div class="mb-3">
-        <label>Название теста</label>
+        <div class="item-content-header-center">   
+            <h5>Редактирование теста</h5>
+        </div>
+        <div class="item-content-header-right">
+            <button class="circle-button primary-purple check-circle-fill-icon" type="submit">
+        </button>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="item-content-main">
+
+        
         <InputText class="form-control" @bind-Value="Test.Title" />
-    </div>
-
-    <div class="mb-3">
-        <label>Описание теста</label>
         <InputTextArea class="form-control" @bind-Value="Test.Description" />
-    </div>
-
-    <div class="mb-3">
-        <button class="btn btn-success me-2" type="submit">
-            Сохранить тест
-        </button>
-
-        <button class="btn btn-danger me-2" type="button" @onclick="DeleteTest">
-            Удалить тест
-        </button>
-
-        <button class="btn btn-secondary" type="button" @onclick="AddOne">Вопрос (один)</button>
-        <button class="btn btn-secondary ms-2" type="button" @onclick="AddMany">Вопрос (много)</button>
-        <button class="btn btn-secondary ms-2" type="button" @onclick="AddNote">Вопрос с заметкой</button>
-        <button class="btn btn-secondary ms-2" type="button" @onclick="AddStep">Вопрос по шагам</button>
-    </div>
-
-    <hr />
-
-    @if (Questions.Any())
-    {
-        <h5>Вопросы теста</h5>
-        @foreach (var q in Questions)
+    
+       @if (Questions.Any())
         {
+            <h5>Вопросы теста</h5>
+            @foreach (var q in Questions)
+            {
             <div class="border rounded p-3 mb-2">
                 <TestQuestionRouter Question="@q" />
             </div>
-        }
-    }
+            }
+       }
+    </div>
+
+   
+    <div class="item-content-footer">
+        <div class="item-content-footer-center">
+            <div class="row-container">
+            <button class="square-button-small primary-gray  list-ul" 
+                type="button" @onclick="AddOne">Вопрос (один)</button>
+            <button class="square-button-small primary-gray list-check-icon" 
+                type="button" @onclick="AddMany"></button>
+                <button class="square-button-small primary-gray  list-ol" 
+            type="button" @onclick="AddStep"></button>
+            <button class="square-button-small primary-gray chat-square-text" 
+                type="button" @onclick="AddNote"></button>
+             </div>
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+        </div>
+    </div>
+
+    
+
 </EditForm>
+</div>
 
 @code {
     [Parameter] public string Id { get; set; }
-       
-       
-
-        [Parameter] public EventCallback<string> OnDeleted { get; set; }
+    [Parameter] public EventCallback<string> OnDeleted { get; set; }
 
     private Test Test = new();
     private List<Question> Questions = new();

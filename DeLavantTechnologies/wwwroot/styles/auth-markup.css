@@ -1,0 +1,62 @@
+.auth-layout {
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+.auth-shell-content{
+    display: flex;
+    flex-direction: column;      /* колонка */
+    align-items: center;         /* горизонтально по центру */
+
+    width: 100vw;                /* на всю ширину viewport */
+    min-height: 100vh;
+
+    padding-top: 4rem;           /* отступ сверху */
+
+    box-sizing: border-box;
+    overflow-x: hidden;          /* убираем горизонтальный скролл */
+}
+
+
+/* SIDE PANELS (общие) */
+.side-panel {
+    position: fixed;
+    top: 4rem;
+    width: 26rem;
+    height: calc(100vh - 4rem);
+    background: #f8f8f8ab;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    z-index: 150;
+    transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+/* LEFT */
+.side-panel.left {
+    box-shadow:
+    2px 0 4px rgba(0, 0, 0, 0.08),
+    6px 0 12px rgba(0, 0, 0, 0.12);
+
+    left: 0;
+    transform: translateX(-100%);
+}
+.side-panel.left.open {
+
+    transform: translateX(0);
+}
+
+/* RIGHT */
+.side-panel.right {
+    padding-left: 2rem;
+    padding: 1rem;
+    box-shadow:
+    -2px 0 4px rgba(0, 0, 0, 0.08),
+    -6px 0 12px rgba(0, 0, 0, 0.12);
+
+    right: 0;
+    transform: translateX(100%);
+}
+.side-panel.right.open {
+    transform: translateX(0);
+}

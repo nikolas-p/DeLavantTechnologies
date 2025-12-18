@@ -1,0 +1,92 @@
+/* === RADIO INPUT === */
+.radio-input {
+    appearance: none;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--primary-red);
+    border-radius: 3rem;
+    background-color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+
+    transition:
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        filter 0.15s ease-in-out;
+}
+
+/* hover */
+.radio-input:hover:not(:disabled) {
+    border-color: var(--primary-red);
+}
+
+/* active */
+.radio-input:active {
+    filter: brightness(90%);
+}
+
+/* focus */
+.radio-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.25rem rgba(253, 13, 13, 0.25);
+}
+
+/* disabled */
+.radio-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* === CHECKED STATE === */
+.radio-input:checked {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+
+    /* SVG белого кольца */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3ccircle cx='10' cy='10' r='5' fill='none' stroke='%23fff' stroke-width='1'/%3e%3c/svg%3e");
+
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 3rem;
+}
+
+
+
+.checkbox-input:active {
+    filter: brightness(90%);
+}
+.checkbox-input:hover:not(:disabled) {
+    border-color: var(--primary-red);
+}
+.checkbox-input:focus {
+    border-color: var(--primary-red);
+    outline: none;
+    box-shadow: 0 0 0 0.25rem rgba(253, 13, 13, 0.25);
+}
+.checkbox-input:disabled {
+    filter: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.checkbox-input:disabled ~ .checkbox-label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.checkbox-input:checked{
+    background-color:var(--primary-red);
+    border-color:var(--primary-red);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+.checkbox-input {
+    appearance: none;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--primary-red);
+    border-radius: 4rem;
+    background-color: #fff;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+

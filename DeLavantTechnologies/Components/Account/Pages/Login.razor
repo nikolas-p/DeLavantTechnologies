@@ -9,12 +9,11 @@
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
-
-<PageTitle>Вход</PageTitle>
+@layout GuestLayout
+<PageTitle>Вход в DeLavant</PageTitle>
 
 <h1>Вход</h1>
-<div class="row">
-    <div class="col-md-4">
+
         <section>
             <StatusMessage Message="@errorMessage" />
             <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
@@ -39,9 +38,7 @@
                
             </EditForm>
         </section>
-    </div>
-   
-</div>
+
 
 @code {
     private string? errorMessage;
@@ -75,8 +72,8 @@
         {
             var roles = await SignInManager.UserManager.GetRolesAsync(user);
 
-            if (roles.Contains("Guest", StringComparer.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(user.LastLoginTime))
+            if (roles.Contains("Ones", StringComparer.OrdinalIgnoreCase)
+                && user.LastLoginTime is not null)
             {
                 NavigationManager.NavigateTo("/404", forceLoad: true);
                 return;
@@ -92,19 +89,11 @@
 
             if (user != null)
             {
-                user.LastLoginTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                user.LastLoginTime = DateTime.UtcNow;
                 await SignInManager.UserManager.UpdateAsync(user);
             }
-
-            // Безопасный редирект
-            var targetUrl = ReturnUrl;
-            if (string.IsNullOrWhiteSpace(targetUrl) || !targetUrl.StartsWith("/"))
-            {
-                targetUrl = "/courses";
-            }
-
-            NavigationManager.NavigateTo(targetUrl, forceLoad: true);
-
+            NavigationManager.NavigateTo("/Auth", replace: true);
+            // RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
         {

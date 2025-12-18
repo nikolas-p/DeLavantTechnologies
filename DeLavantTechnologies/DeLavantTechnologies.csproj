@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\styles\auth-markup.css" />
+    <None Include="wwwroot\styles\toolbar.css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DeLavant.Infrastructure\DeLavant.Infrastructure.csproj" />
   </ItemGroup>
 

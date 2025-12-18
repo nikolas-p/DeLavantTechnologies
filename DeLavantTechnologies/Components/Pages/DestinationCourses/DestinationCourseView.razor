@@ -2,8 +2,15 @@
 @inject ICourseService CourseService
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Authorization
-
 @attribute [Authorize]
+
+ <AuthorizeView>
+        <Authorized>
+        
+        </Authorized>
+  </AuthorizeView>
+
+
 <h3>Просмотр курса</h3>
 
 @if (Course is null)

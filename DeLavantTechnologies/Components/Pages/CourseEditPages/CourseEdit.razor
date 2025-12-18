@@ -1,4 +1,5 @@
 ﻿@page "/course/edit"
+@page "/courses/create"
 @page "/course/edit/{Id}"
 @inject ICourseService CourseService
 @inject IStepService StepService
@@ -6,49 +7,127 @@
 @inject IQuestionService QuestionService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+@layout AuthLayout
+@inject UiState Ui
+@using DeLavantTechnologies.Data
 @using Microsoft.AspNetCore.Authorization
 @using MongoDB.Bson
 @attribute [Authorize]
 
-<h3>@(IsNew ? "Создание курса" : "Редактирование курса")</h3>
 
-<EditForm Model="@Course" OnValidSubmit="SaveCourse" FormName="CourseForm">
 
-     <div class="mb-3">
-        <button class="btn btn-primary" type="submit">Сохранить курс</button>
-        <button class="btn btn-secondary ms-2" type="button" @onclick="AddStep">Добавить раздел</button>
+<div class="auth-toolbar title">
+
+    <div class="toolbar-block left">
+
+        @if (EntityNavDefinitions.EntityNavMap.TryGetValue(Ui.Entity, out var info))
+        {
+            <div class="nav-link"
+                 style="@info.Style"
+                 role="button"
+                 tabindex="0"
+                 @onclick="GoToAuth">
+
+                <span class="square-icon @info.IconClass"></span>
+                <span class="nav-text">@info.Title</span>
+
+            </div>
+        }
     </div>
 
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+    @code {
+        private void GoToAuth()
+        {
+            Ui.SetMode(PageMode.List);
 
-    <div class="mb-3">
-        <label class="form-label">Название курса</label>
-        <InputText class="form-control" @bind-Value="Course.Title" />
+            // Entity НЕ трогаем — она уже выбрана
+            Navigation.NavigateTo("/Auth");
+        }
+    }
+
+
+    <div class="toolbar-block center">
+        <div>
+            <h3>@(IsNew ? "Создание курса" : "Редактирование курса")</h3>
+        </div>
+    </div>
+    <div class="toolbar-block right">
+        <button class="square-button filter-icon"
+                @onclick="Ui.ToggleRight"></button>
+    </div>
+</div>
+
+<main role="main" class="auth-shell-content">
+
+
+<div class="item-content">
+    <EditForm Model="@Course" OnValidSubmit="SaveCourse" FormName="CourseForm">
+
+        
+    
+    <!-- HEADER -->
+    <div class="item-content-header">
+        <div class="item-content-header-left">
+           
+        </div>
+
+        <div class="item-content-header-center">
+           
+        </div>
+
+        <div class="item-content-header-right">
+           <button class="circle-button primary-purple check-circle-fill-icon" type="submit"></button>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Описание курса</label>
-        <InputTextArea class="form-control" @bind-Value="Course.Description" />
-    </div>
+    <!-- MAIN -->
+    <div class="item-content-main">
+       
+        <InputText class="form-control" @bind-Value="Course.Title" aria-placeholder="Название курса"/>
+        
+        <InputTextArea class="form-control" @bind-Value="Course.Description" aria-placeholder="описание по желанию" />
+        
 
-    <hr />
-
+   
     @if (Steps.Any())
     {
         <h4>Разделы курса</h4>
         @foreach (var step in Steps)
         {
-            <div class="border rounded p-3 mb-2">
+            
                 <StepEdit Step="@step"
                           OnStepUpdated="SaveStep"
                           OnStepDeleted="DeleteStep" />
-            </div>
+            
         }
     }
+    </div>
+
+    <!-- FOOTER -->
+    <div class="item-content-footer">
+        <div class="item-content-footer-left">
+           
+        </div>
+
+        <div class="item-content-footer-center">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <button class="btn btn-secondary ms-2" type="button" @onclick="AddStep">Добавить раздел</button>
+        </div>
+
+        <div class="item-content-footer-right">
+           
+        </div>
+    </div>
+       
 </EditForm>
+</div>
+</main>
+
+
 
 @code {
+
     [Parameter] public string? Id { get; set; }
 
     private Course Course { get; set; } = new Course
@@ -56,15 +135,31 @@
             Title = "",
             Description = "",
             Elements = new List<string>(),
-            Access = new List<string>()
+            Access = new List<string>(),
+            CreatedAt = DateTime.UtcNow,
+            LastUpdatedAt = DateTime.UtcNow
         };
 
     private List<Step> Steps { get; set; } = new();
 
     private bool IsNew => string.IsNullOrEmpty(Id);
 
+   
+              public void Dispose()
+        {
+            // при уходе со страницы возвращаем List
+            Ui.SetMode(PageMode.List);
+        }
+    
+
+
     protected override async Task OnInitializedAsync()
     {
+
+         Ui.SetMode(PageMode.Edit);
+
+
+
         if (!IsNew)
         {
             var courseTask = CourseService.GetCourseByIdAsync(Id);
@@ -142,6 +237,18 @@
 
     private async Task SaveCourse()
     {
+      
+
+        if (IsNew)
+        {
+            Course.CreatedAt = DateTime.UtcNow;
+            Course.LastUpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            
+            Course.LastUpdatedAt = DateTime.UtcNow;
+        }
         // 1. Сохраняем все Steps
         foreach (var step in Steps)
         {
@@ -263,15 +370,19 @@
                 Course.Elements.Remove(removedId);
             }
         }
-
+       
         // 4. Сохраняем сам курс
         if (IsNew)
             await CourseService.CreateCourseAsync(Course);
         else
             await CourseService.UpdateCourseAsync(Course);
 
+
         // 5. Навигация обратно к списку
-        Navigation.NavigateTo("/courses");
+        Ui.SetMode(PageMode.List);
+
+        // Entity НЕ трогаем — она уже выбрана
+        Navigation.NavigateTo("/Auth");
     }
 
 

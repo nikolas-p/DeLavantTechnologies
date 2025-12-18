@@ -1,0 +1,33 @@
+﻿@using DeLavantTechnologies.Data
+@using DeLavantTechnologies.Components.AuthComponents.Asides
+@inject UiState Ui
+
+@if (CurrentAsideComponent != null)
+{
+    <DynamicComponent Type="@CurrentAsideComponent" />
+}
+else
+{
+    <p>Нет дополнений</p>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Ui.Changed += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Ui.Changed -= StateHasChanged;
+    }
+    private Type? CurrentAsideComponent => Ui.Entity switch
+    {
+        EntityType.Applicants => typeof(AsideApplicants),
+        EntityType.Courses => typeof(AsideCourses),
+        EntityType.DestinationCourses =>typeof(AsideDestinationCourses), 
+        EntityType.Positions => typeof(AsidePositions),
+        EntityType.Users=>typeof(AsideUsers),
+        _ => null
+    };
+}

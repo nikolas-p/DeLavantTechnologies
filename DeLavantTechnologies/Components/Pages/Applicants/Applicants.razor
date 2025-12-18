@@ -1,0 +1,16 @@
+﻿
+@inject ICourseService CourseService
+@inject NavigationManager Navigation
+@layout AuthLayout
+@inject UiState Ui
+@rendermode InteractiveServer
+@using DeLavantTechnologies.Data
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Admin")]
+
+<h3>Applicants</h3>
+@code {
+    [Parameter] public string Search { get; set; } = "";
+    [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+}

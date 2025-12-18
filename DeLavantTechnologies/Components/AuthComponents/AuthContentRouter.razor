@@ -1,0 +1,64 @@
+﻿@using DeLavantTechnologies.Components.Pages
+@using DeLavantTechnologies.Components.Pages.DestinationCourses
+@using DeLavantTechnologies.Components.Pages.CourseEditPages
+@using DeLavantTechnologies.Components.Pages.UsersEdit
+@using DeLavantTechnologies.Components.Pages.PositionsPages
+@using DeLavantTechnologies.Components.Pages.Applicants
+@using DeLavantTechnologies.Data
+@using Microsoft.AspNetCore.Components
+@inject UiState Ui
+
+
+
+@if (CurrentComponent != null)
+{
+    if (ComponentSupportsFilters)
+    {
+        <DynamicComponent Type="@CurrentComponent" Parameters="@ComponentParameters" />
+    }
+    else
+    {
+        <DynamicComponent Type="@CurrentComponent" />
+    }
+}
+else
+{
+    <p>Выберите раздел слева.</p>
+}
+
+
+@code {
+    private bool ComponentSupportsFilters =>
+    typeof(IEntityListPage).IsAssignableFrom(CurrentComponent!);
+    private Dictionary<string, object?> ComponentParameters =>
+        new Dictionary<string, object?>
+            {
+                ["Search"] = Ui.CurrentState.Search,
+                ["Parameters"] = Ui.CurrentState.Parameters
+            };
+}
+
+@code {
+    private Type? CurrentComponent => Ui.Entity switch
+    {
+        EntityType.Courses => typeof(Courses),
+        EntityType.Users => typeof(Users),
+        EntityType.Positions => typeof(Positions),
+        EntityType.DestinationCourses => typeof(DestinationCourses),
+        EntityType.Applicants => typeof(Applicants),
+        EntityType.Projects => typeof(Projects),
+        EntityType.Home => typeof(HomeEdit),
+        EntityType.Policy => typeof(Policy),
+        _ => typeof(DestinationCourses)
+    };
+
+    protected override void OnInitialized()
+    {
+        Ui.Changed += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Ui.Changed -= StateHasChanged;
+    }
+}

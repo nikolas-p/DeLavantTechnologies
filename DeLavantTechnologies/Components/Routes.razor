@@ -1,14 +1,22 @@
-﻿@using DeLavantTechnologies.Components.Account.Shared
-<Router AppAssembly="typeof(Program).Assembly">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-            <NotAuthorized>
-                <RedirectToLogin />
-            </NotAuthorized>
-        </AuthorizeRouteView>
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-    <DeLavantTechnologies.Components.Pages._404/>
-    </NotFound>
-</Router>
+﻿<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData"
+                                DefaultLayout="@typeof(GuestLayout)">
+                <NotAuthorized>
+                    <DeLavantTechnologies.Components.Account.Shared.RedirectToLogin />
+                </NotAuthorized>
+
+                <Authorizing>
+                    <p>Проверка доступа...</p>
+                </Authorizing>
+            </AuthorizeRouteView>
+        </Found>
+
+        <NotFound>
+            <LayoutView Layout="@typeof(GuestLayout)">
+                <DeLavantTechnologies.Components.Pages._404 />
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

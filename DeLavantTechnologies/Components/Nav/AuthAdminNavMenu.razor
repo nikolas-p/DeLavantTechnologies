@@ -1,0 +1,10 @@
+﻿@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Admin")]
+
+
+<div class="nav-item px-3">
+    <NavLink class="nav-link" href="courses">
+        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Courses
+    </NavLink>
+</div>

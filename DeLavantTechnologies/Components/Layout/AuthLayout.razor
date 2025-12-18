@@ -1,0 +1,13 @@
+﻿@inherits LayoutComponentBase
+
+<AuthorizeView>
+	<Authorized>
+		@Body
+	</Authorized>
+	<NotAuthorized>
+		<DeLavantTechnologies.Components.Account.Shared.RedirectToLogin/>
+	</NotAuthorized>
+</AuthorizeView>
+
+
+

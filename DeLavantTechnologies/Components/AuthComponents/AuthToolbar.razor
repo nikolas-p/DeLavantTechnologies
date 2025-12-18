@@ -1,0 +1,123 @@
+﻿@using DeLavantTechnologies.Data
+@inject UiState Ui
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+
+
+<div class="auth-toolbar title">
+
+    <div class="toolbar-block left">
+        <button class="square-button menu-icon"
+        @onclick="Ui.ToggleLeft">
+        </button>
+
+        @if (EntityNavDefinitions.EntityNavMap.TryGetValue(Ui.Entity, out var info))
+        {
+            <div class="nav-link" style="@info.Style">
+                <span class="square-icon @info.IconClass"></span>
+                <span class="nav-text">@info.Title</span>
+            </div>
+        }
+
+    </div>
+
+
+    <div class="toolbar-block center">
+        <div class="search @(Ui.ShowSearch ? "search-visible" : "search-hidden")">
+            <input class="search-input"
+            @bind="SearchText"
+            @bind:event="oninput" />
+
+
+            <button type="button"
+            class="search-clear-button x-icon @(string.IsNullOrEmpty(SearchText) ? "" : "show")"
+            @onclick="ClearSearch">
+            </button>
+        </div>
+    </div>
+    @code {
+        private string search = "";
+
+        protected override void OnParametersSet()
+        {
+            // если поиск скрыли — сбрасываем значение
+            if (!Ui.ShowSearch && !string.IsNullOrEmpty(search))
+            {
+                search = "";
+                Ui.SetSearch("");
+            }
+        }
+
+        private void ClearSearch()
+        {
+            search = "";
+            Ui.SetSearch("");
+
+        }
+
+        private string SearchText
+        {
+            get => Ui.CurrentState.Search;
+            set => Ui.SetSearch(value);
+        }
+    }
+
+
+    @if (Ui.Entity != EntityType.Policy && Ui.Entity != EntityType.Home)
+    {
+
+        <div class="toolbar-block right">
+            @if (Ui.Entity != EntityType.Projects)
+            {
+                <button class="square-button search-icon"
+                @onclick="Ui.ToggleSearch"> </button>
+            }
+            @if (Ui.Entity != EntityType.DestinationCourses)
+            {
+                <button class="square-button plus-icon"
+                @onclick="Create"></button>
+            }
+            @if (Ui.Entity != EntityType.Projects)
+            {
+                <button class="square-button filter-icon"
+                @onclick="Ui.ToggleRight"></button>
+            }
+        </div>
+
+    }
+    @* @if (Ui.Mode != PageMode.List) *@
+    @* { *@
+    @*     <button @onclick="Back">← Назад</button> *@
+    @*     <span>@Ui.Mode</span> *@
+    @* } *@
+
+
+
+</div>
+
+
+
+@code {
+    protected override void OnInitialized()
+        => Ui.Changed += StateHasChanged;
+
+    void Create()
+    {
+        Ui.SetMode(PageMode.Edit);
+
+        if (Ui.Entity == EntityType.Applicants)
+
+        Nav.NavigateTo($"/{Ui.Entity.ToString().ToLower()}/edit");
+    }
+
+    void Back()
+    {
+        Ui.SetMode(PageMode.List);
+        Ui.SelectEntity(Ui.Entity);
+        Nav.NavigateTo($"/Auth");
+    }
+
+    public void Dispose()
+        => Ui.Changed -= StateHasChanged;
+}

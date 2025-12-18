@@ -1,0 +1,125 @@
+.guest-content {
+    padding-top: 5rem;           /* Отступ сверху, чтобы не перекрывало фиксированный GuestNav */
+    display: flex;               /* Flex-контейнер для колонок */
+    flex-direction: column;      /* Размещаем элементы вертикально */
+    align-items: center;         /* Выравниваем элементы по горизонтали по центру */
+    width: 70%;                  /* Ширина контента относительно экрана */
+    margin: 0 auto;              /* Центрирование блока на странице */
+    box-sizing: border-box;      /* Включаем padding и border в ширину */
+}
+
+.item-content {
+    position: relative;
+    width: auto;              /* 🔥 растягиваем */
+    max-width: 60rem;         /* для примера */
+    min-width: 30rem;         /* 🔥 защита от сжатия */
+    margin: 2rem;
+    border-radius: 3rem;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: visible;        /* 🔥 не режем центр */
+   
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+}
+
+
+.item-content-header,
+.item-content-footer {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    vertical-align: middle;
+
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.6);
+    z-index: 2;
+}
+
+.item-content-header {
+    top: 1rem;
+}
+
+.item-content-footer {
+    bottom: 1rem;
+}
+
+.item-content-header-center,
+.item-content-footer-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+}
+
+
+/* ================= HEADER ================= */
+
+/* левая часть */
+.item-content-header-left {
+    width: max-content;
+    margin-left: 1rem;
+}
+
+
+
+/* правая часть */
+.item-content-header-right {
+   
+    width: max-content;
+    margin-left: auto;
+    margin-right: 1rem;
+}
+
+/* ================= FOOTER ================= */
+
+
+/* левая часть */
+.item-content-footer-left {
+   
+    width: max-content;
+    margin-left: 1rem;
+}
+
+
+/* правая часть */
+.item-content-footer-right {
+   
+    width: max-content;
+    margin-left: auto;
+    margin-right: 1rem;
+}
+
+/* ================= MAIN ================= */
+
+.item-content-main {
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+
+    width: 100%;
+    min-width: 100%;
+   
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+   
+
+    display: flex;              /* 🔥 делаем flex */
+    flex-direction: column;     /* 🔥 элементы в колонку */
+    align-items: center;        /* 🔥 центр по горизонтали */
+}
+
+
+
+.row-container {
+    display: flex;             /* элементы в строку */
+    flex-direction: row;       /* на всякий случай явно */
+    gap: 1rem;                 /* расстояние между элементами */
+    align-items: center;       /* выравнивание по вертикали (по высоте) */
+    flex-wrap: wrap;           /* если элементов много, перенос на новую строку */
+}
