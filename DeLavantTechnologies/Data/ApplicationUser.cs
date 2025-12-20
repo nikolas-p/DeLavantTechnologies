@@ -12,12 +12,12 @@ namespace DeLavantTechnologies.Data
         public string LastName { get; set; } = "";
         public string FirstName { get; set; } = "";
         public string MiddleName { get; set; } = "";
-        public DateTime? LastLoginTime { get; set; } 
+        public DateTime? LastLoginTime { get; set; }
 
         /// <summary>
         /// Должности: "Администратор", "Редактор", "Оператор"
         /// </summary>
-        public List<string>? Positions  { get; set; } = new();
+        public List<Guid> Positions { get; set; } = new(); 
 
         /// <summary>
         /// Права (дополнительные Claims)

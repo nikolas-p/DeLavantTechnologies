@@ -1,22 +1,28 @@
 .auth-layout {
     height: 100vh;
-    overflow: hidden;
-}
+    overflow: hidden; /* родитель НЕ скроллится */
+    background: #F2F2F2;
 
-
-.auth-shell-content{
     display: flex;
-    flex-direction: column;      /* колонка */
-    align-items: center;         /* горизонтально по центру */
-
-    width: 100vw;                /* на всю ширину viewport */
-    min-height: 100vh;
-
-    padding-top: 4rem;           /* отступ сверху */
-
-    box-sizing: border-box;
-    overflow-x: hidden;          /* убираем горизонтальный скролл */
+    flex-direction: column;
 }
+
+.auth-shell-content {
+    overflow-y: auto;      
+    overflow-x: hidden;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    min-height: 100vh;
+    height: auto;
+    width: 100%;
+    padding-top: 4rem;
+    box-sizing: border-box;
+ 
+}
+
 
 
 /* SIDE PANELS (общие) */

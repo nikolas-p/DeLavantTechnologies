@@ -1,5 +1,7 @@
 ﻿@using DeLavantTechnologies.Data
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager NavigationManager
 @inject UiState Ui
 
@@ -8,27 +10,12 @@
         <Authorized>
             @if (context.User.IsInRole("Admin"))
             {
-                @foreach (var entity in new[]
-              {
-                    EntityType.Courses,
-                    EntityType.Users,
-                    EntityType.Projects,
-                    EntityType.Home
-                })
-                {
-                    var info = EntityNavDefinitions.EntityNavMap[entity];
+                <AuthAdminNavMenu/>
 
-                    <div class="nav-link" style="@info.Style" @onclick="() => Select(entity)" >
-                        <span class="square-icon @info.IconClass"></span>
-                        <span class="nav-text">@info.Title</span>
-                    </div>
-
-                }
-
-                <div class="nav-link" style="--gradient: var(--primary-gray);">
-                    <span class="square-icon gear-fill-icon"></span>
-                    <span class="nav-text">@context.User.Identity?.Name</span>
-                </div>
+             <div class="nav-link" style="--gradient: var(--primary-gray);">
+                 <span class="square-icon gear-fill-icon"></span>
+                 <span class="nav-text">@context.User.Identity?.Name</span>
+             </div>
             }
 
             @{
@@ -56,7 +43,6 @@
     void Select(EntityType entity)
     {
         Ui.SelectEntity(entity);
-       
     }
 
     private string? currentUrl = "";

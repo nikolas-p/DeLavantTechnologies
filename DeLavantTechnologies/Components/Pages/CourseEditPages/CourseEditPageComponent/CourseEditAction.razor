@@ -1,0 +1,42 @@
+﻿@inject CourseEditUiState CourseEditUi
+
+<div class="course-edit-aside-column">
+    <div class="action-list">
+       
+        <span class="square-action-icon @(IsHidden ? "square-eye-slash-gray-icon" : "square-eye-gray-icon")"
+      role="button"
+      tabindex="0"
+      @onclick="OnToggleHidden">
+    </span>
+
+        <span class="square-action-icon square-person-blue-icon"
+              role="button"
+              tabindex="0"
+              @onclick="() => Open(AdditionalPageType.Access)">
+        </span>
+
+        <span class="square-action-icon square-pie-chart-purple-icon"
+              role="button"
+              tabindex="0"
+              @onclick="() => Open(AdditionalPageType.Statistic)">
+        </span>
+
+        <span class="square-action-icon square-trash-red-icon"
+              role="button"
+              tabindex="0"
+              @onclick="() => Open(AdditionalPageType.Delete)">
+        </span>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public bool IsHidden { get; set; }
+    [Parameter] public EventCallback OnToggleHidden { get; set; }
+
+
+    void Open(AdditionalPageType type)
+    {
+        CourseEditUi.OpenAdditional(type);
+    }
+}

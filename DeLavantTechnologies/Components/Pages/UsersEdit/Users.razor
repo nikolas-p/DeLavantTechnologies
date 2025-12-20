@@ -1,6 +1,12 @@
-﻿@rendermode InteractiveServer
+﻿@using DeLavantTechnologies.Data.Enum
+@using DeLavantTechnologies.Repositories
+@using Microsoft.AspNetCore.Identity
+@rendermode InteractiveServer
 @implements IEntityListPage
-<h3>Users</h3>
+@inject UserManager<ApplicationUser> UserManager
+@inject IPositionRepository PositionRepository
+@inject NavigationManager NavigationManager
+@inject UiState Ui
 
 <h3>Текущий поиск</h3>
 <p>@Search</p>
@@ -29,17 +35,120 @@ else
 {
     <p>Нет параметров</p>
 }
+<h3>Пользователи</h3>
 
+<button class="btn btn-primary mb-3" @onclick="CreateNew">Добавить пользователя</button>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ФИО</th>
+            <th>Email</th>
+            <th>Должности</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in FilteredApplicants)
+        {
+            <tr>
+                <td>@($"{user.LastName} {user.FirstName} {user.MiddleName}")</td>
+                <td>@user.Email</td>
+                <td>
+                    @{
+                        if (userPositions.TryGetValue(user.Id, out var positions))
+                        {
+                            @string.Join(", ", positions)
+                        }
+                        else
+                        {
+                            <em>Нет должностей</em>
+                        }
+                    }
+                </td>
+
+                <td>
+                    <button class="btn btn-sm btn-secondary" @onclick="() => Edit(user.Id)">Редактировать</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => Delete(user.Id)">Удалить</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
 @code {
+    private List<ApplicationUser> users = new();
+    private Dictionary<Guid, List<string>> userPositions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = UserManager.Users.ToList();
+        var positions = await PositionRepository.GetAllAsync();
+
+        foreach (var user in users)
+        {
+            userPositions[user.Id] = positions
+                .Where(p => user.Positions.Contains(p.Id))
+                .Select(p => p.Name)
+                .ToList();
+        }
+    }
+
+    void CreateNew() => NavigationManager.NavigateTo("/users/edit");
+
+    void Edit(Guid id) => NavigationManager.NavigateTo($"/users/edit/{id}");
+
+    async Task Delete(Guid id)
+    {
+        var user = await UserManager.FindByIdAsync(id.ToString());
+        if (user != null)
+        {
+            await UserManager.DeleteAsync(user);
+            users = UserManager.Users.ToList();
+        }
+    }
+
     [Parameter] public string Search { get; set; } = "";
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
 
-    protected override void OnParametersSet()
+    IEnumerable<ApplicationUser> FilteredApplicants
     {
-        if (Parameters.TryGetValue("order", out var order))
+        get
         {
-            // применяем сортировку курсов
+            IEnumerable<ApplicationUser> query = users;
+
+            /* ===== ПОИСК ===== */
+            var search = Ui.CurrentState.Search;
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+
+            query = query.Where(u =>
+                (!string.IsNullOrEmpty(u.LastName) &&
+                 u.LastName.Contains(s, StringComparison.OrdinalIgnoreCase))
+             || (!string.IsNullOrEmpty(u.FirstName) &&
+                 u.FirstName.Contains(s, StringComparison.OrdinalIgnoreCase))
+             || (!string.IsNullOrEmpty(u.MiddleName) &&
+                 u.MiddleName.Contains(s, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+
+            /* ===== СОРТИРОВКА ===== */
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var orderObj)
+                && orderObj is UserOrder order)
+            {
+                query = order switch
+                 {
+                    UserOrder.AZName => query.OrderBy(u => u.LastName),
+                    UserOrder.ZAName => query.OrderByDescending(u => u.LastName),
+                    UserOrder.LastDateLoginToNew => query.OrderBy(u=>u.LastLoginTime),
+                    UserOrder.LastDateLoginToOld => query.OrderByDescending(u => u.LastLoginTime),
+                    _ => query
+                };
+            }
+
+            return query;
         }
     }
+
 }

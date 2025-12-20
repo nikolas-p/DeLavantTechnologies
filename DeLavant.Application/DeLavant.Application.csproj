@@ -14,4 +14,8 @@
     <ProjectReference Include="..\DeLavant.Domain\DeLavant.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Users\" />
+  </ItemGroup>
+
 </Project>

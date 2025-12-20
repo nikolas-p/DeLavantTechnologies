@@ -1,5 +1,47 @@
-﻿<h3>QuestionManyEdit</h3>
+﻿@using MongoDB.Bson
+<div>
+    <div class="d-flex justify-content-between">
+        <h6>Вопрос с несколькими ответами</h6>
+        <div>
+            <button class="btn btn-sm btn-danger me-1" @onclick="Delete">Удалить</button>
+            <button class="btn btn-sm btn-primary" @onclick="Save">Сохранить</button>
+        </div>
+    </div>
+
+    <InputText class="form-control mb-2" @bind-Value="Question.Title" placeholder="Текст вопроса" />
+
+    @if (Question.Answers != null)
+    {
+        @foreach (var ans in Question.Answers)
+        {
+            <div class="input-group mb-1" @key="ans.Id">
+                <InputCheckbox @bind-Value="ans.IsCorrect" />
+                <InputText class="form-control" @bind-Value="ans.Value" />
+                <button class="btn btn-sm btn-danger" @onclick="() => RemoveAnswer(ans.Id)">x</button>
+            </div>
+        }
+    }
+
+    <button class="btn btn-sm btn-outline-primary mt-1" @onclick="AddAnswer">Добавить ответ</button>
+</div>
 
 @code {
+    [Parameter] public Question Question { get; set; }
+    [Parameter] public EventCallback<Question> OnQuestionUpdated { get; set; }
+    [Parameter] public EventCallback<string> OnQuestionDeleted { get; set; }
 
+    private void AddAnswer()
+    {
+        Question.Answers ??= new List<Answer>();
+        Question.Answers.Add(new Answer { Id = ObjectId.GenerateNewId().ToString(), Value = "", IsCorrect = false });
+    }
+
+    private void RemoveAnswer(string id)
+    {
+        var a = Question.Answers.FirstOrDefault(x => x.Id == id);
+        if (a != null) Question.Answers.Remove(a);
+    }
+
+    private async Task Save() => await OnQuestionUpdated.InvokeAsync(Question);
+    private async Task Delete() => await OnQuestionDeleted.InvokeAsync(Question.Id);
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DeLavant.Domain.Courses;
+using DeLavant.Domain.Steps;
 
 namespace DeLavant.Application.Courses
 {
@@ -14,5 +15,6 @@ namespace DeLavant.Application.Courses
         Task CreateCourseAsync(Course course);
         Task UpdateCourseAsync(Course course);
         Task DeleteCourseAsync(string id);
+        Task SaveCourseAsync(Course course, List<Step> steps);
     }
 }

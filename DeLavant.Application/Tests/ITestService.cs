@@ -11,8 +11,9 @@ namespace DeLavant.Application.Tests
     {
         Task<Test?> GetTestByIdAsync(string id);
         Task CreateTestAsync(Test test);
-        Task UpdateTestAsyc(Test test);
+        Task UpdateTestAsync(Test test);
         Task DeleteTestAsync(string id);
+        Task SaveTestAsync(Test test);
     }
 
     public interface IQuestionService
@@ -22,7 +23,8 @@ namespace DeLavant.Application.Tests
         Task CreateQuestionAsync(Question question);
         Task UpdateQuestionAsync(Question question);
         Task DeleteQuestionAsync(string id);
-        
+        Task SaveQuestionAsync(Question question);
+
     }
 
 }

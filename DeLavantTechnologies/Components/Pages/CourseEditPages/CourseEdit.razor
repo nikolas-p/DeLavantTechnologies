@@ -9,28 +9,20 @@
 @rendermode InteractiveServer
 @layout AuthLayout
 @inject UiState Ui
+@inject CourseEditUiState CourseEditUi
 @using DeLavantTechnologies.Data
+@using DeLavantTechnologies.Components.Pages.CourseEditPages.CourseEditPageComponent
 @using Microsoft.AspNetCore.Authorization
 @using MongoDB.Bson
 @attribute [Authorize]
 
-
-
 <div class="auth-toolbar title">
-
     <div class="toolbar-block left">
-
         @if (EntityNavDefinitions.EntityNavMap.TryGetValue(Ui.Entity, out var info))
         {
-            <div class="nav-link"
-                 style="@info.Style"
-                 role="button"
-                 tabindex="0"
-                 @onclick="GoToAuth">
-
+            <div class="nav-link" style="@info.Style" role="button" tabindex="0" @onclick="GoToAuth">
                 <span class="square-icon @info.IconClass"></span>
                 <span class="nav-text">@info.Title</span>
-
             </div>
         }
     </div>
@@ -39,41 +31,69 @@
         private void GoToAuth()
         {
             Ui.SetMode(PageMode.List);
-
-            // Entity НЕ трогаем — она уже выбрана
             Navigation.NavigateTo("/Auth");
         }
     }
-
-
     <div class="toolbar-block center">
         <div>
             <h3>@(IsNew ? "Создание курса" : "Редактирование курса")</h3>
         </div>
     </div>
     <div class="toolbar-block right">
-        <button class="square-button filter-icon"
-                @onclick="Ui.ToggleRight"></button>
+        <button class="square-button menu-icon" @onclick="()=>CourseEditUi.ToggleRight()" ></button>
     </div>
 </div>
 
+<!-- UNDER TOOLBAR -->
+<div class="fixed-under-toolbar left">
+    <button class="square-button menu-icon" @onclick="()=>CourseEditUi.ToggleLeft()"></button>
+</div>
+
+
+<!-- LEFT ASIDE -->
+<div class="fixed-aside left @(CourseEditUi.ShowLeft ? "open" : "")">
+    <DynamicComponent Type="@(CourseEditUi.ShowLeft 
+    ?  typeof(CourseDragDropOpen) 
+    : typeof(CourseDragDrop))" 
+    Parameters="@DragDropParameters"/>
+</div>
+<!-- RIGHT ASIDE -->
+<div class="fixed-aside right @(CourseEditUi.ShowRight ? "open" : "")">
+    <DynamicComponent Type="@(CourseEditUi.ShowRight 
+                            ? typeof(CourseEditActionOpen) 
+                            : typeof(CourseEditAction))"
+                  Parameters="@RightDynamicComponentParams" />
+
+</div>
+
+<!-- CENTER ASIDE -->
+@if (CourseEditUi.ShowAdditional && CurrentAsideComponent is not null)
+{
+    <div class="fixed-center-aside open">
+    <div class="fixed-center-aside-content">
+        <div class="fixed-center-aside-header">
+            <button class="square-button x-icon"
+                    @onclick="CourseEditUi.CloseAdditional">
+            </button>
+        </div>
+
+        <DynamicComponent Type="@CurrentAsideComponent"
+                          Parameters="@AsideParameters" />
+    </div>
+</div>
+
+}
+
+
+
 <main role="main" class="auth-shell-content">
-
-
 <div class="item-content">
     <EditForm Model="@Course" OnValidSubmit="SaveCourse" FormName="CourseForm">
-
-        
-    
     <!-- HEADER -->
     <div class="item-content-header">
-        <div class="item-content-header-left">
-           
-        </div>
+        <div class="item-content-header-left"></div>
 
-        <div class="item-content-header-center">
-           
-        </div>
+        <div class="item-content-header-center"></div>
 
         <div class="item-content-header-right">
            <button class="circle-button primary-purple check-circle-fill-icon" type="submit"></button>
@@ -94,20 +114,14 @@
         <h4>Разделы курса</h4>
         @foreach (var step in Steps)
         {
-            
-                <StepEdit Step="@step"
-                          OnStepUpdated="SaveStep"
-                          OnStepDeleted="DeleteStep" />
-            
+                <StepEdit Step="@step"  @key="step.Id" OnStepUpdated="SaveStep" OnStepDeleted="DeleteStep" />  
         }
     }
     </div>
 
     <!-- FOOTER -->
     <div class="item-content-footer">
-        <div class="item-content-footer-left">
-           
-        </div>
+        <div class="item-content-footer-left"></div>
 
         <div class="item-content-footer-center">
             <DataAnnotationsValidator />
@@ -115,9 +129,7 @@
             <button class="btn btn-secondary ms-2" type="button" @onclick="AddStep">Добавить раздел</button>
         </div>
 
-        <div class="item-content-footer-right">
-           
-        </div>
+        <div class="item-content-footer-right"></div>
     </div>
        
 </EditForm>
@@ -128,6 +140,46 @@
 
 @code {
 
+ private Dictionary<string, object> RightDynamicComponentParams => new()
+{
+    { "IsHidden", Course.IsHidden },
+    { "OnToggleHidden", EventCallback.Factory.Create(this, ToggleHidden) }
+};
+
+    private Type? CurrentAsideComponent => CourseEditUi.Type switch
+    {
+        AdditionalPageType.Access => typeof(CourseAccess),
+        AdditionalPageType.Delete=> typeof(CourseDelete),
+        AdditionalPageType.Statistic => typeof(CourseStatistic),
+        _ => null
+    };
+
+    private IDictionary<string, object> AsideParameters =>
+        new Dictionary<string, object>
+        {
+            { "CourseId", Id! },
+            { "Course", Course },
+        };
+
+        private IDictionary<string, object> DragDropParameters => new Dictionary<string, object>
+    {
+          { "Steps", Steps },
+        { "Course", Course },
+        { "OnOrderChanged", EventCallback.Factory.Create<List<string>>(this, HandleOrderChanged) }
+    };
+
+    private async Task HandleOrderChanged(List<string> newOrder)
+    {
+    // Обновляем курс
+    Course.Elements = newOrder;
+
+    // Автосохранение
+    await CourseService.UpdateCourseAsync(Course);
+     // Можно переставить Steps по новому порядку
+    Steps = newOrder.Select(id => Steps.FirstOrDefault(s => s.Id == id)!).ToList();
+
+    StateHasChanged();
+    }
     [Parameter] public string? Id { get; set; }
 
     private Course Course { get; set; } = new Course
@@ -137,17 +189,33 @@
             Elements = new List<string>(),
             Access = new List<string>(),
             CreatedAt = DateTime.UtcNow,
-            LastUpdatedAt = DateTime.UtcNow
+            LastUpdatedAt = DateTime.UtcNow,
+            IsHidden = false,
+            AccessType = ""
         };
+    private void ToggleHidden() {
+    Course.IsHidden = !Course.IsHidden;
+    CourseService.UpdateCourseAsync(Course);
+    }
+
 
     private List<Step> Steps { get; set; } = new();
 
     private bool IsNew => string.IsNullOrEmpty(Id);
 
-   
-              public void Dispose()
+    protected override void OnInitialized()
+{
+    CourseEditUi.Changed += OnUiChanged;
+}
+
+private void OnUiChanged()
+{
+    InvokeAsync(StateHasChanged);
+}
+                                                                                                                                                                                                 public void Dispose()
         {
             // при уходе со страницы возвращаем List
+            CourseEditUi.Changed -= OnUiChanged;
             Ui.SetMode(PageMode.List);
         }
     
@@ -237,153 +305,16 @@
 
     private async Task SaveCourse()
     {
-      
+        Course.LastUpdatedAt = DateTime.UtcNow;
 
         if (IsNew)
-        {
             Course.CreatedAt = DateTime.UtcNow;
-            Course.LastUpdatedAt = DateTime.UtcNow;
-        }
-        else
-        {
-            
-            Course.LastUpdatedAt = DateTime.UtcNow;
-        }
-        // 1. Сохраняем все Steps
-        foreach (var step in Steps)
-        {
-            // Сохраняем все элементы Step
-            foreach (var el in step.Elements)
-            {
-                if (el.IsTest)
-                {
-                    // Получаем тест из базы или создаем новый
-                    Test test;
-                    if (!string.IsNullOrEmpty(el.Id))
-                    {
-                        test = await TestService.GetTestByIdAsync(el.Id) ?? new Test();
-                    }
-                    else
-                    {
-                        test = new Test();
-                        el.Id = test.Id;
-                    }
 
-                    // Сохраняем вопросы теста
-                    if (test.Questions != null)
-                    {
-                        for (int i = 0; i < test.Questions.Count; i++)
-                        {
-                            var questionId = test.Questions[i];
-                            Question q;
+        // Сохраняем курс и все его шаги/тесты/вопросы через сервис
+        await CourseService.SaveCourseAsync(Course, Steps);
 
-                            if (!string.IsNullOrEmpty(questionId))
-                            {
-                                q = await QuestionService.GetQuestionByIdAsync(questionId) ?? new Question();
-                                q.Id = questionId;
-                            }
-                            else
-                            {
-                                q = new Question();
-                                q.Id = ObjectId.GenerateNewId().ToString();
-                                test.Questions[i] = q.Id; // сохраняем ссылку в тесте
-                            }
-
-                            // Если Answers == null
-                            q.Answers ??= new List<Answer>();
-
-                            // Сохраняем вопрос
-                            if (string.IsNullOrEmpty(questionId))
-                                await QuestionService.CreateQuestionAsync(q);
-                            else
-                                await QuestionService.UpdateQuestionAsync(q);
-                        }
-                    }
-                    else
-                    {
-                        test.Questions = new List<string>();
-                    }
-
-                    // Сохраняем сам тест
-                    if (string.IsNullOrEmpty(el.Id))
-                        await TestService.CreateTestAsync(test);
-                    else
-                        await TestService.UpdateTestAsyc(test);
-                }
-                else
-                {
-                    // Лекции можно добавить аналогично
-                    // var lecture = await LectureService.GetLectureByIdAsync(el.Id);
-                    // if (lecture != null) await LectureService.UpdateLectureAsync(lecture);
-                }
-            }
-
-            // 2. Сохраняем Step
-            if (string.IsNullOrEmpty(step.Id))
-            {
-                step.Id = ObjectId.GenerateNewId().ToString();
-                await StepService.CreateStepAsync(step);
-
-                Course.Elements ??= new List<string>();
-                Course.Elements.Add(step.Id); // добавляем в курс
-            }
-            else
-            {
-                await StepService.UpdateStepAsync(step);
-            }
-        }
-
-        // 3. Удаляем Step, которых нет в списке Steps
-        if (Course.Elements != null)
-        {
-            var existingStepIds = Steps.Select(s => s.Id).ToList();
-            var removedIds = Course.Elements.Where(id => !existingStepIds.Contains(id)).ToList();
-
-            foreach (var removedId in removedIds)
-            {
-                // Удаляем Step и все его элементы
-                var stepToDelete = await StepService.GetStepByIdAsync(removedId);
-                if (stepToDelete != null)
-                {
-                    foreach (var el in stepToDelete.Elements)
-                    {
-                        if (el.IsTest)
-                        {
-                            var test = await TestService.GetTestByIdAsync(el.Id);
-                            if (test?.Questions != null)
-                            {
-                                foreach (var qId in test.Questions)
-                                    await QuestionService.DeleteQuestionAsync(qId);
-                            }
-                            if (test != null)
-                                await TestService.DeleteTestAsync(el.Id);
-                        }
-                        else
-                        {
-                            // Удаляем лекцию
-                            // await LectureService.DeleteLectureAsync(el.Id);
-                        }
-                    }
-                }
-
-                await StepService.DeleteStepAsync(removedId);
-                Course.Elements.Remove(removedId);
-            }
-        }
-       
-        // 4. Сохраняем сам курс
-        if (IsNew)
-            await CourseService.CreateCourseAsync(Course);
-        else
-            await CourseService.UpdateCourseAsync(Course);
-
-
-        // 5. Навигация обратно к списку
+        // Переходим обратно к списку
         Ui.SetMode(PageMode.List);
-
-        // Entity НЕ трогаем — она уже выбрана
         Navigation.NavigateTo("/Auth");
     }
-
-
 }

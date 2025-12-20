@@ -1,0 +1,55 @@
+﻿@inject ICourseRepository CourseRepository
+@inject CourseEditUiState CourseEditUi
+
+<h2>Доступ к курсу</h2>
+
+<select @bind="Course.AccessType">
+    <option value="Public">Публичный</option>
+    <option value="Private">Приватный</option>
+</select>
+
+<textarea @bind="AccessRaw"
+          placeholder="ID пользователей через запятую">
+</textarea>
+
+<button class="square-button primary"
+        @onclick="Save">
+    Сохранить
+</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+@code {
+    [Parameter] public string CourseId { get; set; } = default!;
+    [Parameter] public Course Course { get; set; } = default!;
+
+
+    private string AccessRaw = "";
+
+protected override async Task OnInitializedAsync()
+    {
+        AccessRaw = string.Join(", ", Course.Access ?? []);
+    }
+
+    async Task Save()
+    {
+        Course.Access = AccessRaw
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .ToList();
+
+        await CourseRepository.UpdateCourseAsync(Course);
+        CourseEditUi.CloseAdditional();
+    }
+    // здесь логика изменения Course.AccessType и Course.Access
+}

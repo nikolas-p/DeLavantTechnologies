@@ -114,7 +114,16 @@
     align-items: center;        /* 🔥 центр по горизонтали */
 }
 
+.column {
+    display: flex;             /* элементы в строку */
+    flex-direction: column;       /* на всякий случай явно */
+    gap: 1rem;                 /* расстояние между элементами */
+    align-items: center;       /* выравнивание по вертикали (по высоте) */
+    flex-wrap: wrap;           /* если элементов много, перенос на новую строку */
+    height: auto;
+    padding: 2rem 0;
 
+}
 
 .row-container {
     display: flex;             /* элементы в строку */
@@ -122,4 +131,96 @@
     gap: 1rem;                 /* расстояние между элементами */
     align-items: center;       /* выравнивание по вертикали (по высоте) */
     flex-wrap: wrap;           /* если элементов много, перенос на новую строку */
+
+     transition: all 0.25s ease;
+}
+/* БАЗОВЫЙ КОНТЕЙНЕР */
+.row-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* СОСТОЯНИЕ ОТКРЫТО */
+.row-container.open {
+    min-height: 5rem;           /* ✅ ровно 5rem */
+    height: auto;
+    opacity: 1;
+}
+.expand-row {
+    
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+
+
+.edit-form {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+.edit-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-extrabold);
+}
+
+.oneline-item-container, .column-item-container {
+    box-sizing: border-box;
+    width: 600px;
+    min-height: 50px;
+    height: auto;
+
+    padding: 1rem 2rem;
+
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #9F9F9F;
+    border-radius: 40px;
+
+    display: flex;
+    align-items: center;
+
+    transition: all 0.2s ease;
+    font-size: 1.3rem;
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-extrabold);
+}
+.column-item-container {
+    flex-direction: column; /* колонки */
+    gap: 1rem;              /* расстояние между элементами */
+    align-items: flex-start; /* выравниваем элементы слева */
+}
+
+.row-container.open {
+   max-height: 200px; /* или больше */
+    opacity: 1;
+    transform: scaleY(1);
+}
+
+.create-container.expand-row {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+
+    /* Начальные значения для скрытого состояния */
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: scaleY(0.95);
+    transition: all 0.25s ease;
+    margin-bottom: 3rem;
+}
+
+/* Когда режим создания активен */
+.create-container.expand-row.open {
+   max-height: 200px; /* или больше */
+    opacity: 1;
+    transform: scaleY(1);
 }

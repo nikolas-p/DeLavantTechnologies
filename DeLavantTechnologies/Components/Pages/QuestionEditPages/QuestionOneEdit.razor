@@ -1,42 +1,98 @@
 ﻿@using MongoDB.Bson
+@using DeLavant.Domain.Tests
+@inject ITestService TestService
+@inject IQuestionService QuestionService
 @rendermode InteractiveServer
 
-<h5>Вопрос с одним ответом</h5>
-
-<label>Текст вопроса</label>
-<InputText class="form-control" @bind-Value="Question.Title" />
-
-@if (Question.Answers == null || Question.Answers.Count == 0)
-{
-    <p>Ответы отсутствуют</p>
-}
-else
-{
-    @foreach (var answer in Question.Answers)
-    {
-        <div class="input-group mt-2" @key="answer.Id">
-            <InputCheckbox @bind-Value="answer.IsCorrect" class="form-check-input" />
-            <InputText class="form-control" @bind-Value="answer.Value" />
-            <button>x</button> - чтобы удалить 
+<div>
+    <div class="d-flex justify-content-between">
+        <h6>Вопрос с одним ответом</h6>
+        <div>
+            <button class="btn btn-sm btn-danger me-1" type="button" @onclick="Delete">Удалить</button>
+            <button class="btn btn-sm btn-primary" type="button" @onclick="Save">Сохранить</button>
         </div>
-    }
-}
+    </div>
 
-<button class="btn btn-primary btn-sm mt-2" type="button" @onclick="AddAnswer">Добавить ответ</button>
+    <InputText class="form-control mb-2" @bind-Value="Question.Title" placeholder="Текст вопроса" @onblur="async _ => await Save()" />
+
+    @if (Question.Answers == null || !Question.Answers.Any())
+    {
+        <p>Ответы отсутствуют</p>
+    }
+    else
+    {
+        <InputRadioGroup @bind-Value="SelectedAnswerId"
+                 Name="@($"radio-{Question.Id}")">
+
+
+            @foreach (var answer in Question.Answers)
+            {
+                <div class="input-group mb-1" @key="answer.Id">
+                    <InputRadio Value="answer.Id" class="form-check-input" />
+                    <InputText class="form-control" @bind-Value="answer.Value" @onblur="async _ => await Save()" />
+                    <button class="btn btn-sm btn-danger" type="button" @onclick="() => RemoveAnswer(answer.Id)">x</button>
+                </div>
+            }
+        </InputRadioGroup>
+    }
+
+    <button class="btn btn-sm btn-outline-primary mt-1" type="button" @onclick="AddAnswer">Добавить ответ</button>
+</div>
 
 @code {
-    [Parameter] public Question Question { get; set; } = new Question { Answers = new List<Answer>() };
+    [Parameter] public Question Question { get; set; }
+    [Parameter] public EventCallback<Question> OnQuestionUpdated { get; set; }
+    [Parameter] public EventCallback<string> OnQuestionDeleted { get; set; }
+
+    private async Task OnCorrectAnswerChanged(string value)
+    {
+        SelectedAnswerId = value;
+        await Save();
+    }
+
+    private string SelectedAnswerId
+    {
+        get => Question.Answers.FirstOrDefault(a => a.IsCorrect)?.Id;
+        set
+        {
+            foreach (var a in Question.Answers)
+                a.IsCorrect = a.Id == value;
+
+            _ = Save(); // fire-and-forget
+        }
+    }
 
     private void AddAnswer()
     {
-        if (Question.Answers == null)
-            Question.Answers = new List<Answer>();
-
+        Question.Answers ??= new List<Answer>();
         Question.Answers.Add(new Answer
             {
                 Id = ObjectId.GenerateNewId().ToString(),
                 Value = "",
                 IsCorrect = false
             });
+    }
+
+    private void RemoveAnswer(string id)
+    {
+        var ans = Question.Answers.FirstOrDefault(a => a.Id == id);
+        if (ans != null) Question.Answers.Remove(ans);
+        Save();
+    }
+
+    private async Task Save()
+    {
+        if (Question == null) return;
+
+        // Сохраняем сам вопрос в БД
+        await QuestionService.SaveQuestionAsync(Question);
+        await OnQuestionUpdated.InvokeAsync(Question);
+        Console.WriteLine($"Save change {Question.Id}");
+    }
+
+    private async Task Delete()
+    {
+        await QuestionService.DeleteQuestionAsync(Question.Id);
+        await OnQuestionDeleted.InvokeAsync(Question.Id);
     }
 }

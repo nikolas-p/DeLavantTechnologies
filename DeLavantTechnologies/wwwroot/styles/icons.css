@@ -51,8 +51,14 @@
       mask-image: url('../icons/chat-square-text.svg'); 
     -webkit-mask-image: url('../icons/chat-square-text.svg');
 }
-
-
+.three-dots-circle-fill-icon{
+      mask-image: url('../icons/three-dots-circle-fill.svg'); 
+    -webkit-mask-image: url('../icons/three-dots-circle-fill.svg');
+}
+.arrow-counterclockwise-icon{
+      mask-image: url('../icons/arrow-counterclockwise.svg'); 
+    -webkit-mask-image: url('../icons/arrow-counterclockwise.svg');
+}
 
 .square-icon.courses-icon::after {
     mask-image: url("../icons/search.svg");
@@ -91,4 +97,106 @@
 .square-icon.house-fill-icon::after {
     mask-image: url("../icons/house-fill.svg");
     -webkit-mask-image: url("../icons/house-fill.svg");
+}
+
+.square-eye-gray-icon {
+    background-image: url("../icons/square-eye-gray.svg");
+}
+
+.square-eye-slash-gray-icon {
+    background-image: url("../icons/square-eye-slash-gray.svg");
+}
+
+.square-person-blue-icon {
+    background-image: url("../icons/square-person-blue.svg");
+}
+
+.square-pie-chart-purple-icon {
+    background-image: url("../icons/square-pie-chart-purple.svg");
+}
+
+.square-trash-red-icon {
+    background-image: url("../icons/square-trash-red.svg");
+}
+.square-list-ul-gray-icon {
+    background-image: url("../icons/square-list-ul-gray.svg");
+}
+
+.square-action-icon {
+    width: 3rem;
+    height: 3rem;
+    display: inline-block;
+
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+
+    /* ВАЖНО: сброс mask */
+    mask-image: none;
+    -webkit-mask-image: none;
+}
+
+/* Контейнер списка */
+.fixed-aside-list {
+    width: auto;
+    height: auto;
+    margin-top: 5rem;
+    margin-left: 2.5rem;
+    margin-right: 2rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 1rem;
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-bold);
+}
+
+/* Элемент списка */
+.fixed-aside-list-item {
+    width: 100%;
+    height: auto;
+
+    display: flex;
+    align-items: center;          /* выравнивание по высоте */
+    gap: 1rem;                    /* расстояние между иконкой и текстом */
+    border: 1px solid var(--primary-gray);
+    border-radius: 1rem;
+    padding: 0.5rem;
+    box-sizing: border-box;
+     cursor: grab;
+}
+
+/* Иконка */
+.fixed-aside-list-item-icon {
+    width: 3rem;
+    height: 3rem;
+
+    display: inline-block;
+    flex-shrink: 0;
+
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+
+    /* ВАЖНО: сброс mask */
+    mask-image: none;
+    -webkit-mask-image: none;
+}
+
+/* Заголовок */
+.fixed-aside-list-item-title {
+   
+    flex: 1;                      /* занимает всё свободное пространство */
+    font-size: 1.2rem;
+    line-height: 1.1;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;        /* максимум 2 строки */
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
 }

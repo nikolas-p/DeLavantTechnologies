@@ -1,0 +1,16 @@
+﻿<h1>Action Open</h1>
+<div class="course-edit-aside-column">
+    <div class="action-list">
+       
+        <span class="square-action-icon @(IsHidden ? "square-eye-slash-gray-icon" : "square-eye-gray-icon")"
+      role="button"
+      tabindex="0"
+      @onclick="OnToggleHidden">
+    </span>
+    </div>
+    </div>
+
+@code {
+    [Parameter] public bool IsHidden { get; set; }
+    [Parameter] public EventCallback OnToggleHidden { get; set; }
+}

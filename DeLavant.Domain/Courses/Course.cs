@@ -13,6 +13,7 @@ namespace DeLavant.Domain.Courses
         public List<string>? Elements { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastUpdatedAt { get; set; }
+        public bool IsHidden { get; set; }
         public string? AccessType { get; set; }
         public List<string>? Access {  get; set; }
     }

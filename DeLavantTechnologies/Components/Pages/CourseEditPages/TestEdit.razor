@@ -1,156 +1,146 @@
 ﻿@inject ITestService TestService
 @inject IQuestionService QuestionService
-@inject NavigationManager Navigation
+@using DeLavantTechnologies.Components.Pages.QuestionEditPages
 @using MongoDB.Bson
 @using DeLavant.Domain.Tests
 @rendermode InteractiveServer
-
-<div class="item-content">
-<EditForm Model="@Test" OnValidSubmit="SaveTest" FormName="@formName">
-  
-    <!-- HEADER -->
-    <div class="item-content-header">
-        <div class="item-content-header-left">
-            <button class="circle-button primary-red x-circle-fill-icon" type="button" @onclick="DeleteTest">
-            </button>
-        </div>
-
-        <div class="item-content-header-center">   
-            <h5>Редактирование теста</h5>
-        </div>
-        <div class="item-content-header-right">
-            <button class="circle-button primary-purple check-circle-fill-icon" type="submit">
-        </button>
-        </div>
-    </div>
-
-    <!-- MAIN -->
-    <div class="item-content-main">
-
-        
-        <InputText class="form-control" @bind-Value="Test.Title" />
-        <InputTextArea class="form-control" @bind-Value="Test.Description" />
-    
-       @if (Questions.Any())
-        {
-            <h5>Вопросы теста</h5>
-            @foreach (var q in Questions)
-            {
-            <div class="border rounded p-3 mb-2">
-                <TestQuestionRouter Question="@q" />
-            </div>
-            }
-       }
-    </div>
-
-   
-    <div class="item-content-footer">
-        <div class="item-content-footer-center">
-            <div class="row-container">
-            <button class="square-button-small primary-gray  list-ul" 
-                type="button" @onclick="AddOne">Вопрос (один)</button>
-            <button class="square-button-small primary-gray list-check-icon" 
-                type="button" @onclick="AddMany"></button>
-                <button class="square-button-small primary-gray  list-ol" 
-            type="button" @onclick="AddStep"></button>
-            <button class="square-button-small primary-gray chat-square-text" 
-                type="button" @onclick="AddNote"></button>
-             </div>
+@if (Test != null)
+{
+    <div class="item-content">
+        <EditForm Model="@Test" OnValidSubmit="SaveTest" FormName="@formName">
             <DataAnnotationsValidator />
             <ValidationSummary />
-        </div>
+
+            <!-- HEADER -->
+            <div class="item-content-header">
+                <div class="item-content-header-left">
+                    <button class="circle-button primary-red x-circle-fill-icon" type="button" @onclick="DeleteTest"></button>
+                </div>
+                <div class="item-content-header-center">
+                    <h5>Редактирование теста</h5>
+                </div>
+                <div class="item-content-header-right">
+                    <button class="circle-button primary-purple check-circle-fill-icon" type="submit"></button>
+                </div>
+            </div>
+
+            <!-- MAIN -->
+            <div class="item-content-main">
+                <InputText class="form-control mb-2" @bind-Value="Test.Title" placeholder="Название теста" />
+                <InputTextArea class="form-control mb-3" @bind-Value="Test.Description" placeholder="Описание теста" />
+
+                @if (Questions.Any())
+                {
+                    <h5>Вопросы теста</h5>
+                    <div class="column">
+                        @foreach (var q in Questions)
+                        {
+                            <div class="border rounded p-3 mb-2" @key="q.Id">
+                                <DynamicComponent Type="Resolve(q.Type)" Parameters="@(new Dictionary<string, object?>
+                                {
+                                    ["Question"] = q,
+                                    ["OnQuestionUpdated"] = EventCallback.Factory.Create<Question>(this, OnQuestionUpdated),
+                                    ["OnQuestionDeleted"] = EventCallback.Factory.Create<string>(this, OnQuestionDeleted)
+                                })" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- FOOTER -->
+            <div class="item-content-footer">
+                <button class="btn btn-outline-primary btn-sm" type="button" @onclick="AddOne">Вопрос (один)</button>
+                <button class="btn btn-outline-primary btn-sm ms-2" type="button" @onclick="AddMany">Вопрос (несколько)</button>
+                <button class="btn btn-outline-primary btn-sm ms-2" type="button" @onclick="AddNote">Заметка</button>
+            </div>
+        </EditForm>
     </div>
-
-    
-
-</EditForm>
-</div>
-
+}
+else
+{
+    <h4>загрузка теста</h4>
+}
 @code {
-    [Parameter] public string Id { get; set; }
+    [Parameter] public string TestId { get; set; }
     [Parameter] public EventCallback<string> OnDeleted { get; set; }
 
-    private Test Test = new();
-    private List<Question> Questions = new();
-    private string formName => $"TestForm_{Test.Id}";
+    private Test Test { get; set; }
+    private List<Question> Questions { get; set; } = new();
+    private string formName => $"TestForm_{Test?.Id}";
 
     protected override async Task OnInitializedAsync()
     {
-        if (!string.IsNullOrEmpty(Id))
+        if (!string.IsNullOrEmpty(TestId))
         {
-            Test = await TestService.GetTestByIdAsync(Id) ?? new Test();
-            Test.Questions ??= new List<string>();
-
-            if (Test.Questions.Any())
-                Questions = await QuestionService.GetQuestionsByIdsAsync(Test.Questions);
+            Test = await TestService.GetTestByIdAsync(TestId);
+            if (Test != null)
+            {
+                Questions = await QuestionService.GetQuestionsByIdsAsync(Test.Questions ?? new List<string>());
+            }
         }
     }
+
+    private Type Resolve(string type) => type switch
+    {
+        "one" => typeof(QuestionOneEdit),
+        "many" => typeof(QuestionManyEdit),
+        "note" => typeof(QuestionNoteEdit),
+        "step" => typeof(QuestionStepEdit),
+        _ => typeof(QuestionNoteEdit)
+    };
 
     private async Task SaveTest()
     {
-        // 1. Сохраняем вопросы
-        foreach (var q in Questions)
-        {
-            if (await QuestionService.GetQuestionByIdAsync(q.Id) != null)
-                await QuestionService.UpdateQuestionAsync(q);
-            else
-                await QuestionService.CreateQuestionAsync(q);
-        }
-
-        // 2. Синхронизируем список ID
         Test.Questions = Questions.Select(q => q.Id).ToList();
+        foreach (var q in Questions)
+            await QuestionService.SaveQuestionAsync(q);
 
-        // 3. Сохраняем тест
-        if (string.IsNullOrEmpty(Test.Id))
-            await TestService.CreateTestAsync(Test);
-        else
-            await TestService.UpdateTestAsyc(Test);
-
-        Console.WriteLine($"изменения в тесте {Test.Id} применены");
+        await TestService.SaveTestAsync(Test);
     }
 
-    /// <summary>
-    /// ❌ Удаление теста и всех связанных вопросов
-    /// </summary>
     private async Task DeleteTest()
     {
-        if (string.IsNullOrEmpty(Test.Id))
-            return;
+        foreach (var qId in Test.Questions ?? new List<string>())
+            await QuestionService.DeleteQuestionAsync(qId);
 
-        // 1. Удаляем вопросы
-        if (Test.Questions != null)
-        {
-            foreach (var qId in Test.Questions)
-                await QuestionService.DeleteQuestionAsync(qId);
-        }
-
-        // 2. Удаляем тест
         await TestService.DeleteTestAsync(Test.Id);
-
-        Console.WriteLine($"тест {Test.Id} удалён");
-
-        // 3. Сообщаем родителю
         await OnDeleted.InvokeAsync(Test.Id);
     }
-
-
     private void AddOne() => AddQuestion("one");
     private void AddMany() => AddQuestion("many");
     private void AddNote() => AddQuestion("note");
-    private void AddStep() => AddQuestion("step");
+
 
     private void AddQuestion(string type)
     {
         var q = new Question
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                Type = type,
-                Answers = new List<Answer>()
-            };
-
+        {
+            Id = ObjectId.GenerateNewId().ToString(),
+            Type = type,
+            Answers = new List<Answer>()
+        };
         Questions.Add(q);
-
         Test.Questions ??= new List<string>();
         Test.Questions.Add(q.Id);
+    }
+
+    private void OnQuestionUpdated(Question q)
+    {
+        var idx = Questions.FindIndex(x => x.Id == q.Id);
+        if (idx >= 0)
+            Questions[idx] = q;
+
+        StateHasChanged(); // чтобы UI обновился сразу
+    }
+
+    private void OnQuestionDeleted(string id)
+    {
+        var q = Questions.FirstOrDefault(x => x.Id == id);
+        if (q != null)
+        {
+            Questions.Remove(q);
+            Test.Questions?.Remove(id);
+        }
     }
 }

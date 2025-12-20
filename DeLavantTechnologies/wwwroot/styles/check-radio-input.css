@@ -1,3 +1,27 @@
+.radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;          /* расстояние между пунктами */
+}
+.radio-item {
+    display: flex;
+    align-items: center;   /* ВАЖНО: выравнивание по высоте */
+    gap: 0.75rem;
+
+    cursor: pointer;
+}
+/* подпись */
+.radio-label {
+    display: flex;
+    align-items: center;  /* центрируем текст по высоте */
+    cursor: pointer;
+
+    font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-bold);
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
 /* === RADIO INPUT === */
 .radio-input {
     appearance: none;

@@ -2,19 +2,23 @@
 @using DeLavantTechnologies.Components.Pages.QuestionEditPages
 
 <DynamicComponent Type="Resolve()" Parameters="@(new Dictionary<string, object?>
-    {
-        ["Question"] = Question
-    })" />
+{
+    ["Question"] = Question,
+    ["OnQuestionUpdated"] = EventCallback.Factory.Create<Question>(this, OnQuestionUpdated),
+    ["OnQuestionDeleted"] = EventCallback.Factory.Create<string>(this, OnQuestionDeleted)
+})" />
 
 @code {
     [Parameter] public Question Question { get; set; }
+    [Parameter] public EventCallback<Question> OnQuestionUpdated { get; set; }
+    [Parameter] public EventCallback<string> OnQuestionDeleted { get; set; }
 
     private Type Resolve() => Question.Type switch
     {
         "one" => typeof(QuestionOneEdit),
         "many" => typeof(QuestionManyEdit),
         "note" => typeof(QuestionNoteEdit),
-        "step" => typeof(QuestionStepEdit)
-       
+        "step" => typeof(QuestionStepEdit),
+        _ => typeof(QuestionNoteEdit)
     };
 }

@@ -1,5 +1,44 @@
-﻿<h3>Дополнительная панель должности</h3>
+﻿@inject UiState Ui
+@using DeLavantTechnologies.Data
+
+<div class="radio-list">
+    <InputRadioGroup @bind-Value="SortOrder">
+        
+        <label class="radio-item">
+            <InputRadio Value="PositionsOrder.CountMore" class="radio-input" />
+            <span class="radio-label">По количеству больше</span>
+        </label>
+
+        <label class="radio-item">
+            <InputRadio Value="PositionsOrder.CountSmall" class="radio-input" />
+            <span class="radio-label">По количеству меньше</span>
+        </label>
+
+        <label class="radio-item">
+            <InputRadio Value="PositionsOrder.AZName" class="radio-input" />
+            <span class="radio-label">По названию: А → Я</span>
+        </label>
+
+        <label class="radio-item">
+            <InputRadio Value="PositionsOrder.ZAName" class="radio-input" />
+            <span class="radio-label">По названию: Я → А</span>
+        </label>
+
+    </InputRadioGroup>
+</div>
 
 @code {
+    private PositionsOrder SortOrder
+    {
+        get
+        {
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var value)
+                && value is PositionsOrder order)
+                return order;
+
+            return PositionsOrder.AZName;
+        }
+        set => Ui.SetParam("order", value);
+    }
 
 }

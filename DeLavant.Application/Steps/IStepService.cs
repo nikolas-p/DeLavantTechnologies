@@ -14,5 +14,6 @@ namespace DeLavant.Application.Steps
         Task CreateStepAsync(Step step);
         Task UpdateStepAsync(Step step);
         Task DeleteStepAsync(string id);
+        Task SaveStepAsync(Step step);
     }
 }

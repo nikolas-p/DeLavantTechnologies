@@ -1,5 +1,41 @@
-﻿<h3>Дополнительная панель Соискателей</h3>
+﻿@inject UiState Ui
+@using DeLavantTechnologies.Data
 
+<div class="radio-list">
+    <InputRadioGroup @bind-Value="SortOrder">
+        
+        <label class="radio-item">
+            <InputRadio Value="ApplicantsOrder.AZName" class="radio-input" />
+            <span class="radio-label">По названию: А → Я</span>
+        </label>
+
+        <label class="radio-item">
+            <InputRadio Value="ApplicantsOrder.ZAName" class="radio-input" />
+            <span class="radio-label">По названию: Я → А</span>
+        </label>
+
+        <label class="radio-item">
+            <InputRadio Value="ApplicantsOrder.LastDateLoginToNew" class="radio-input" />
+            <span class="radio-label">По дате входа к сегодняшней</span>
+        </label>
+
+        <label class="radio-item">
+            <InputRadio Value="ApplicantsOrder.LastDateLoginToOld" class="radio-input" />
+            <span class="radio-label">По дате входа от сегодняшней</span>
+        </label>
+
+    </InputRadioGroup>
+</div>
 @code {
-
+    private ApplicantsOrder SortOrder
+    {
+        get
+        {
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var value) && value is ApplicantsOrder order)
+                return order;
+            return ApplicantsOrder.AZName;
+        }
+        set => Ui.SetParam("order", value);
+    }
 }
+

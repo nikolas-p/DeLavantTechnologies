@@ -86,14 +86,7 @@
         </div>
 
     }
-    @* @if (Ui.Mode != PageMode.List) *@
-    @* { *@
-    @*     <button @onclick="Back">← Назад</button> *@
-    @*     <span>@Ui.Mode</span> *@
-    @* } *@
-
-
-
+    
 </div>
 
 
@@ -104,20 +97,19 @@
 
     void Create()
     {
+
+        
         Ui.SetMode(PageMode.Edit);
 
+        if (Ui.Entity == EntityType.Positions)
+            return;
         if (Ui.Entity == EntityType.Applicants)
+            return;
 
         Nav.NavigateTo($"/{Ui.Entity.ToString().ToLower()}/edit");
     }
 
-    void Back()
-    {
-        Ui.SetMode(PageMode.List);
-        Ui.SelectEntity(Ui.Entity);
-        Nav.NavigateTo($"/Auth");
-    }
-
+   
     public void Dispose()
         => Ui.Changed -= StateHasChanged;
 }

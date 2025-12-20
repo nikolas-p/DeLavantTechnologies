@@ -1,0 +1,147 @@
+.fixed-under-toolbar {
+    position: fixed;
+    top: 5rem;
+    z-index: 300;
+    min-height: 4rem;
+}
+
+
+.fixed-under-toolbar.left {
+ left:3rem;
+}
+
+:root {
+    --aside-closed: 9rem;
+    --aside-open: 30rem;
+    --aside-shadow: 0 0 30px rgba(0,0,0,0.15);
+}
+
+.fixed-aside {
+  
+    position: fixed;
+    top: 4rem;
+    bottom: 0;
+
+    width: var(--aside-closed);
+     background-color: rgba(255, 255, 255, 0.016);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--aside-shadow);
+
+    z-index: 290;
+    overflow: hidden;
+
+    transition: width 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+/* ===== LEFT ===== */
+.fixed-aside.left {
+    left: 0;
+}
+
+/* ===== RIGHT ===== */
+.fixed-aside.right {
+    right: 0;
+}
+
+/* ===== OPEN ===== */
+.fixed-aside.open {
+    width: var(--aside-open);
+}
+
+.course-edit-aside-column {
+    margin-top: 2rem;            /* отступ сверху */
+    display: flex;
+    justify-content: center;     /* центр по горизонтали */
+}
+.course-edit-aside-column-left
+{
+    margin-top:5rem;            /* отступ сверху */
+    display: flex;
+    justify-content: center;  
+}
+.course-edit-aside-column .action-list {
+    display: flex;
+    flex-direction: column;    /* вертикальная колонка */
+    align-items: center;       /* элементы по центру */
+    gap: 1rem;                 /* расстояние между элементами */
+}
+
+
+/* ===== OVERLAY ===== */
+.fixed-center-aside {
+    position: fixed;
+    inset: 0;                         /* top/right/bottom/left = 0 */
+    z-index: 1000;
+
+    display: flex;
+    justify-content: center;          /* центр по X */
+    align-items: flex-start;          /* сверху, не по центру экрана */
+
+    padding-top: 6rem;                /* отступ от toolbar */
+
+    background: rgba(0, 0, 0, 0.4);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.fixed-center-aside.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== MODAL ===== */
+.fixed-center-aside-content {
+    width: 50rem;
+    max-height: calc(100vh - 8rem);
+
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.35);
+
+    padding: 2rem;
+
+    animation: scaleIn 0.25s ease;
+}
+
+/* ===== HEADER ===== */
+.fixed-center-aside-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.drag-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;       /* задаём размер, чтобы был видимый элемент */
+    height: 3rem;
+    cursor: grab;
+    margin-bottom: 1rem;
+}
+
+/* Контейнер списка */
+.drag-drop-list {
+    width: 20rem;           /* ширина списка */
+    margin-left: 2rem;      /* отступ слева */
+    display: flex;
+    flex-direction: column; /* элементы в колонку */
+    align-items: flex-start; /* выравнивание по левому краю */
+    gap: 0.5rem;            /* отступ между элементами списка */
+}
+

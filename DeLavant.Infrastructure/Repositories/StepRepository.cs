@@ -13,18 +13,26 @@ namespace DeLavant.Infrastructure.Repositories
 
 
         public async Task<List<Step>> GetStepsByIdsAsync(List<string> stepIds)
-        {
-            // Конвертируем строки в ObjectId для безопасного поиска
-            var objectIds = stepIds
-                .Where(id => ObjectId.TryParse(id, out _)) // фильтруем некорректные Id
-                .Select(id => new ObjectId(id))
-                .ToList();
+{
+    // Конвертируем строки в ObjectId для безопасного поиска
+    var objectIds = stepIds
+        .Where(id => ObjectId.TryParse(id, out _)) // фильтруем некорректные Id
+        .Select(id => new ObjectId(id))
+        .ToList();
 
-            // Ищем все Step, где Id входит в список
-            var filter = Builders<Step>.Filter.In(s => s.Id, objectIds.Select(oid => oid.ToString()));
+    // Ищем все Step, где Id входит в список
+    var filter = Builders<Step>.Filter.In(s => s.Id, objectIds.Select(oid => oid.ToString()));
+    var stepsFromDb = await _collection.Find(filter).ToListAsync();
 
-            return await _collection.Find(filter).ToListAsync();
-        }
+    // Сортируем шаги по порядку stepIds
+    var orderedSteps = stepIds
+        .Select(id => stepsFromDb.FirstOrDefault(s => s.Id == id))
+        .Where(s => s != null)
+        .ToList();
+
+    return orderedSteps!;
+}
+
 
         public Task<Step?> GetStepByIdAsync(string id)  => GetByIdAsync(id);
 

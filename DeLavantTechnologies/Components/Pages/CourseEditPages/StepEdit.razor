@@ -1,74 +1,53 @@
 ﻿@using MongoDB.Bson
-@rendermode InteractiveServer
+@using DeLavant.Domain.Steps
+@using DeLavant.Domain.Tests
 @inject ITestService TestService
 @inject IQuestionService QuestionService
 @inject IStepService StepService
 
 <div class="item-content">
-
-<EditForm Model="@Step" OnValidSubmit="SaveStepWithElements" FormName="@FormName">
+    <EditForm Model="@Step" OnValidSubmit="SaveStepWithElements" FormName="@FormName">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-
-      
-
-    <!-- HEADER -->
-    <div class="item-content-header">
-        <div class="item-content-header-left">
-           <button type="button" class="circle-button primary-red x-circle-fill-icon" @onclick="Delete"></button>
+        <!-- HEADER -->
+        <div class="item-content-header">
+            <div class="item-content-header-left">
+                <button type="button" class="circle-button primary-red x-circle-fill-icon" @onclick="DeleteStep"></button>
+            </div>
+            <div class="item-content-header-center"></div>
+            <div class="item-content-header-right">
+                <button type="submit" class="circle-button primary-purple check-circle-fill-icon"></button>
+            </div>
         </div>
 
-        <div class="item-content-header-center">
-           
-        </div>
+        <!-- MAIN -->
+        <div class="item-content-main">
+            <InputText class="form-control" @bind-Value="Step.Title" placeholder="Название шага" />
+            <InputTextArea class="form-control" @bind-Value="Step.Description" placeholder="Описание (по желанию)" />
 
-        <div class="item-content-header-right">
-           <button type="submit" class="circle-button primary-purple check-circle-fill-icon"></button>
-        </div>
-    </div>
+            @foreach (var el in Step.Elements)
+            {
+                <DynamicComponent Type="Resolve(el.IsTest)" Parameters="@(new Dictionary<string, object?>
+{
+    ["TestId"] = el.Id,
+    ["OnDeleted"] = EventCallback.Factory.Create<string>(this, OnElementDeleted)
+})" />
 
-    <!-- MAIN -->
-    <div class="item-content-main">
+            }
 
-                
-            <InputText class="form-control" @bind-Value="Step.Title" aria-placeholder="название раздела"/>
-       
-            <InputTextArea class="form-control" @bind-Value="Step.Description" aria-placeholder="описание по желанию"/>
             
-        @foreach (var el in Step.Elements)
-        {
-            <DynamicComponent Type="Resolve(el.IsTest)"
-                              Parameters="@(new Dictionary<string, object?>
-    {
-        ["Id"] = el.Id,
-        ["OnDeleted"] = EventCallback.Factory.Create<string>(
-            this,
-            id => OnTestDeleted(id)
-        )
-    })" />
-
-        }
-
-        @code {
-            private Type Resolve(bool isTest) => isTest ? typeof(TestEdit) : typeof(LectureEdit);
-        }
-    </div>
-
-    <!-- FOOTER -->
-    <div class="item-content-footer">
-       
-
-        <div class="item-content-footer-center">
-            <button class="btn btn-outline-primary btn-sm" @onclick="AddLecture" type="button">Добавить лекцию</button>
-            <button class="btn btn-outline-primary btn-sm ms-2" @onclick="AddTest" type="button">Добавить тест</button>
         </div>
 
-       
-    </div>
-  </EditForm>
+        <!-- FOOTER -->
+        <div class="item-content-footer">
+            <div class="item-content-footer-center">
+                <button class="btn btn-outline-primary btn-sm" type="button" @onclick="AddLecture">Добавить лекцию</button>
+                <button class="btn btn-outline-primary btn-sm ms-2" type="button" @onclick="AddTest">Добавить тест</button>
+            </div>
+        </div>
+    </EditForm>
 </div>
-
 
 @code {
     [Parameter] public Step Step { get; set; }
@@ -77,73 +56,71 @@
 
     private string FormName => $"StepForm_{Step.Id}";
 
+    // Локальный словарь для хранения актуальных Test объектов
+    private Dictionary<string, Test> TestsCache { get; set; } = new();
+
+    private Type Resolve(bool isTest) => isTest ? typeof(TestEdit) : typeof(LectureEdit);
+
+    private async Task OnElementDeleted(string elementId)
+    {
+        var element = Step.Elements.FirstOrDefault(e => e.Id == elementId);
+        if (element != null)
+        {
+            Step.Elements.Remove(element);
+            await OnStepUpdated.InvokeAsync(Step);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        TestsCache = new Dictionary<string, Test>();
+
+        foreach (var el in Step.Elements.Where(e => e.IsTest))
+        {
+            var test = await TestService.GetTestByIdAsync(el.Id);
+            if (test != null)
+            {
+                TestsCache[el.Id] = test;
+            }
+        }
+    }
+
+
     private async Task SaveStepWithElements()
     {
-        // 1. Сохраняем все элементы Step
+        // Сохраняем все тесты из локального кеша
         foreach (var el in Step.Elements)
         {
-            if (el.IsTest)
+            if (el.IsTest && TestsCache.TryGetValue(el.Id, out var test))
             {
-                // Получаем тест
-                var test = await TestService.GetTestByIdAsync(el.Id) ?? new Test { Id = el.Id };
-
-                // Получаем вопросы
-                var questions = test.Questions != null && test.Questions.Any()
-                    ? await QuestionService.GetQuestionsByIdsAsync(test.Questions)
-                    : new List<Question>();
-
-                // Сохраняем каждый вопрос
-                foreach (var q in questions)
+            // Сохраняем тест и его вопросы через TestEdit
+            await TestService.SaveTestAsync(test);
+                foreach (var q in test.Questions ?? new List<string>())
                 {
-                    if (await QuestionService.GetQuestionByIdAsync(q.Id) != null)
-                        await QuestionService.UpdateQuestionAsync(q);
-                    else
-                        await QuestionService.CreateQuestionAsync(q);
+                    var question = await QuestionService.GetQuestionByIdAsync(q) ?? new Question { Id = q };
+                    await QuestionService.SaveQuestionAsync(question);
                 }
-
-                // Синхронизация списка ID вопросов
-                test.Questions = questions.Select(q => q.Id).ToList();
-
-                // Сохраняем сам тест
-                if (string.IsNullOrEmpty(test.Id))
-                    await TestService.CreateTestAsync(test);
-                else
-                    await TestService.UpdateTestAsyc(test);
-            }
-            else
-            {
-                // Лекции можно сохранять аналогично через LectureService
             }
         }
 
-        // 2. Сохраняем Step
-        if (string.IsNullOrEmpty(Step.Id))
-            await StepService.CreateStepAsync(Step);
-        else
-            await StepService.UpdateStepAsync(Step);
+        // Сохраняем Step
+        await StepService.SaveStepAsync(Step);
 
-        // 3. Уведомляем родительский компонент (CourseEdit)
+        // Уведомляем родителя
         await OnStepUpdated.InvokeAsync(Step);
     }
 
-    private async Task Delete()
+    private async Task DeleteStep()
     {
-        // При удалении Step можно удалить и все элементы
         foreach (var el in Step.Elements)
         {
             if (el.IsTest)
             {
-                var test = await TestService.GetTestByIdAsync(el.Id);
-                if (test != null)
+                if (TestsCache.TryGetValue(el.Id, out var test))
                 {
-                    // Удаляем все вопросы
-                    if (test.Questions != null)
-                    {
-                        foreach (var qId in test.Questions)
-                        {
-                            await QuestionService.DeleteQuestionAsync(qId);
-                        }
-                    }
+                    // Удаляем вопросы
+                    foreach (var qId in test.Questions ?? new List<string>())
+                        await QuestionService.DeleteQuestionAsync(qId);
 
                     // Удаляем тест
                     await TestService.DeleteTestAsync(test.Id);
@@ -151,7 +128,7 @@
             }
             else
             {
-                // Лекции удаляем через LectureService
+                // LectureService удаление
             }
         }
 
@@ -160,10 +137,8 @@
 
     private async Task AddLecture()
     {
-        // Создание лекции через LectureService
         Console.WriteLine("Имитация создания лекции");
     }
-
 
     private async Task AddTest()
     {
@@ -175,6 +150,8 @@
                 Id = test.Id,
                 IsTest = true
             });
+
+        TestsCache[test.Id] = test;
     }
 
     private void OnTestDeleted(string testId)
@@ -183,8 +160,14 @@
         if (element != null)
         {
             Step.Elements.Remove(element);
-            StateHasChanged(); // 🔥 тест исчезает сразу
+            TestsCache.Remove(testId);
+            StateHasChanged();
         }
     }
 
+    private void OnTestUpdated(Test test)
+    {
+        // Обновляем кеш теста
+        TestsCache[test.Id] = test;
+    }
 }

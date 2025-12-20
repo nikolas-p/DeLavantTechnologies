@@ -1,0 +1,12 @@
+﻿<h2>Статистика курса</h2>
+
+<p>Курс ID: @CourseId</p>
+
+
+
+@code {
+    [Parameter] public string CourseId { get; set; } = default!;
+    [Parameter] public Course Course { get; set; } = default!;
+
+    // здесь логика изменения Course.AccessType и Course.Access
+}

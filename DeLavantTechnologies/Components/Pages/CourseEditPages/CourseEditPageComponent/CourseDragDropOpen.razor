@@ -1,0 +1,43 @@
+﻿@inject IJSRuntime JS
+@using DeLavantTechnologies.Data
+
+
+<div id="@ContainerId" class="fixed-aside-list">
+    @if (Steps != null)
+    {
+        @foreach (var step in Steps)
+        {
+            <div class="fixed-aside-list-item"  @key="step.Id" data-step-id="@step.Id">
+                <div class="fixed-aside-list-item-icon square-list-ul-gray-icon"></div>
+                <div class="fixed-aside-list-item-title">@step.Title</div>
+            </div>
+        
+        }
+    }
+</div>
+
+
+@code {
+    [Parameter] public List<Step> Steps { get; set; } = new();
+    [Parameter] public EventCallback<List<string>> OnOrderChanged { get; set; }
+     [Parameter] public Course Course { get; set; } = new();
+    [Parameter] public string ContainerId { get; set; } = $"drag-{Guid.NewGuid()}";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("sortableInit", ContainerId, DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateOrder(List<string> newOrder)
+    {
+        // вызывается из JS
+        if (OnOrderChanged.HasDelegate)
+        {
+            await OnOrderChanged.InvokeAsync(newOrder);
+        }
+    }
+}

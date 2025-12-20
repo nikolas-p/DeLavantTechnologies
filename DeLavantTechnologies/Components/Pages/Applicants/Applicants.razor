@@ -1,16 +1,470 @@
-﻿
-@inject ICourseService CourseService
-@inject NavigationManager Navigation
-@layout AuthLayout
-@inject UiState Ui
-@rendermode InteractiveServer
-@using DeLavantTechnologies.Data
+﻿@using DeLavantTechnologies.Data
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@rendermode InteractiveServer
+@inject UserManager<ApplicationUser> UserManager
+@inject UiState Ui
+@implements IEntityListPage
 
 @attribute [Authorize(Roles = "Admin")]
 
-<h3>Applicants</h3>
+
+<div class="column">
+@* ================= CREATE ================= *@
+<div class="row-container expand-row @(isCreating ? "open" : "")">
+    <div class="column">
+    @if (!string.IsNullOrWhiteSpace(errorMassage))
+    {
+        <div class="error-message">
+        @errorMassage
+        </div>
+    }
+
+    @if (isCreating)
+    {
+        <form class="edit-form" @onsubmit="SaveCreate">
+            <div class="row-container">
+
+                <button class="circle-button primary-purple check-circle-fill-icon"
+                        type="submit">
+                </button>
+
+                <div class="column-item-container">
+                    <input class="edit-input"
+                           @bind="createName"
+                           placeholder="ФИО (Фамилия Имя Отчество)" />
+
+                    <input class="edit-input"
+                           @bind="createEmail"
+                           placeholder="Email" />
+
+                    <input class="edit-input" type="password"
+                           @bind="createPassword"
+                           placeholder="Пароль" />
+                </div>
+
+                <button class="circle-button primary-red x-circle-fill-icon"
+                        type="button"
+                        @onclick="CancelCreate">
+                </button>
+
+            </div>
+        </form>
+    }
+    </div>
+</div>
+
+<div class="column">
+
+@* ================= LIST ================= *@
+@foreach (var user in FilteredApplicants)
+{
+    <div class="row-container expand-row @(editingId == user.Id ? "editing" : "")">
+       
+       
+
+        @* LEFT *@
+        @if (editingId == user.Id)
+        {
+            <button class="circle-button primary-purple check-circle-fill-icon"
+                    type="submit"
+                    form="edit-form-@user.Id">
+            </button>
+        }
+        else
+        {
+            <button class="circle-button secondary-gray three-dots-circle-fill-icon"
+                    @onclick="() => StartEdit(user)">
+            </button>
+        }
+
+        @* CENTER *@
+        <div class="column-item-container">
+
+                 @if (!string.IsNullOrWhiteSpace(errorMassage))
+        {
+            <div class="error-message">
+            @errorMassage
+            </div>
+        }
+            @if (editingId == user.Id)
+            {
+
+                <form id="edit-form-@user.Id"
+                      @onsubmit="() => SaveEdit(user)">
+
+                     
+                    <input class="edit-input"
+                           @bind="editName"
+                           placeholder="ФИО" />
+
+                    <input class="edit-input"
+                           @bind="editEmail"
+                           placeholder="Email" />
+
+                    <input class="edit-input"
+                          
+                           @bind="editPassword"
+                           placeholder="Новый пароль (необязательно)" />
+
+                    <div class="row-container">
+                        <span class="datetimeinfo">
+                            @(user.LastLoginTime.HasValue
+    ? user.LastLoginTime.Value.AddHours(3).ToString("dd.MM.yyyy HH:mm")
+    : "Не активирован")
+
+                        </span>
+
+                        <button type="button"
+                                class="circle-button secondary-gray arrow-counterclockwise-icon"
+                                @onclick="() => ResetLastLoginTime(user)">
+                        </button>
+                    </div>
+                   
+
+                </form>
+            }
+            else
+            {
+                <strong>
+                    @($"{user.LastName} {user.FirstName} {user.MiddleName}")
+                </strong>
+                <strong>
+                    @user.Email
+                </strong>
+
+                <small class="text-muted">
+                    @(user.LastLoginTime.HasValue
+                        ? $"Последний визит: {user.LastLoginTime:dd.MM.yyyy HH:mm}"
+                        : "Не активирован")
+                </small>
+            }
+
+        </div>
+
+        @* RIGHT *@
+        @if (editingId == user.Id)
+        {
+            <button class="circle-button secondary-gray x-circle-fill-icon"
+                    type="button"
+                    @onclick="CancelEdit">
+            </button>
+        }
+        else
+        {
+            <button class="circle-button primary-red x-circle-fill-icon
+                   @(deletePending.ContainsKey(user.Id) ? "pulse" : "")"
+                    @onclick="() => ToggleDelete(user.Id)">
+            </button>
+        }
+
+    </div>
+}
+
+</div>
+ </div>
 @code {
+
+    /* ================= STATE ================= */
+    private string errorMassage = "";
+void SetError(string message)
+{
+    errorMassage = message;
+    StateHasChanged();
+}
+
+void ClearError()
+{
+    errorMassage = "";
+}
+    private List<ApplicationUser> users = new();
+
+    private Guid? editingId;
+    private bool isCreating;
+
+    private string createName = "";
+    private string createEmail = "";
+    private string createPassword = "";
+
+    private string editName = "";
+    private string editEmail = "";
+    private string editPassword = "";
+
+    private Dictionary<Guid, CancellationTokenSource> deletePending = new();
+
+    private bool disposed;
+
+    /* ================= INIT ================= */
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApplicants();
+        Ui.Changed += OnUiChanged;
+    }
+
+    async Task LoadApplicants()
+    {
+        users.Clear();
+
+        foreach (var user in UserManager.Users.ToList())
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+            if (roles.Contains("Ones"))
+                users.Add(user);
+        }
+    }
+
+    void OnUiChanged()
+    {
+        if (disposed) return;
+
+        if (Ui.Entity == EntityType.Applicants && Ui.Mode == PageMode.Edit && !isCreating)
+        {
+            // Закрываем редактирование любых открытых записей
+            if(!Ui.ShowLeft)
+            {
+            editingId = null;
+            StartCreate();
+            }
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    /* ================= CREATE ================= */
+
+    void StartCreate()
+    {
+        isCreating = true;
+        createName = createEmail = createPassword = "";
+    }
+
+    async Task SaveCreate()
+    {
+        if (!TryParseFullName(createName,
+            out var last,
+            out var first,
+            out var middle,
+            out var error))
+        {
+            SetError(error);
+            return;
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = createEmail,
+            Email = createEmail,
+            LastName = last,
+            FirstName = first,
+            MiddleName = middle,
+            LastLoginTime = null
+        };
+
+        var result = await UserManager.CreateAsync(user, createPassword);
+        user.EmailConfirmed = true;
+
+        if (!result.Succeeded)
+        {
+            SetError(string.Join(", ",
+                result.Errors.Select(e => e.Description)));
+            return;
+        }
+
+        await UserManager.AddToRoleAsync(user, "Ones");
+
+        users.Add(user);
+        ClearError();
+        isCreating = false;
+        Ui.SetMode(PageMode.List);
+    }
+
+    void CancelCreate()
+    {
+        isCreating = false;
+        ClearError();
+        Ui.SetMode(PageMode.List);
+    }
+
+    /* ================= EDIT ================= */
+
+    void StartEdit(ApplicationUser user)
+    {
+        isCreating = false;
+
+        editingId = user.Id;
+        editName = $"{user.LastName} {user.FirstName} {user.MiddleName}";
+        editEmail = user.Email ?? "";
+        editPassword = "";
+    }
+
+    async Task SaveEdit(ApplicationUser user)
+    {
+        if (!TryParseFullName(editName,
+            out var last,
+            out var first,
+            out var middle,
+            out var error))
+        {
+            SetError(error);
+            return;
+        }
+
+        user.LastName = last;
+        user.FirstName = first;
+        user.MiddleName = middle;
+        user.Email = editEmail;
+        user.UserName = editEmail;
+
+        await UserManager.UpdateAsync(user);
+
+        if (!string.IsNullOrWhiteSpace(editPassword))
+        {
+            var token = await UserManager.GeneratePasswordResetTokenAsync(user);
+            await UserManager.ResetPasswordAsync(user, token, editPassword);
+        }
+
+        editingId = null;
+        ClearError();
+    }
+
+    void CancelEdit()
+{
+    editingId = null;
+    ClearError();
+}
+
+    async Task ResetLastLoginTime(ApplicationUser user)
+    {
+        user.LastLoginTime = null;
+        await UserManager.UpdateAsync(user);
+    }
+
+    /* ================= DELETE ================= */
+
+    void ToggleDelete(Guid id)
+    {
+        if (deletePending.TryGetValue(id, out var cts))
+        {
+            cts.Cancel();
+            deletePending.Remove(id);
+            StateHasChanged();
+            return;
+        }
+
+        cts = new CancellationTokenSource();
+        deletePending[id] = cts;
+        StateHasChanged();
+
+        _ = DeleteWithDelay(id, cts.Token);
+    }
+
+    async Task DeleteWithDelay(Guid id, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(5000, token);
+
+            var user = await UserManager.FindByIdAsync(id.ToString());
+            if (user != null)
+            {
+                await UserManager.DeleteAsync(user);
+                users.RemoveAll(u => u.Id == id);
+            }
+        }
+        catch (TaskCanceledException) { }
+        finally
+        {
+            deletePending.Remove(id);
+            StateHasChanged();
+        }
+    }
+
+    /* ================= HELPERS ================= */
+
+    bool TryParseFullName(
+        string input,
+        out string last,
+        out string first,
+        out string middle,
+        out string error)
+    {
+        last = first = middle = "";
+        error = "";
+
+        var parts = input
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length < 2)
+        {
+            error = "Введите минимум Фамилию и Имя";
+            return false;
+        }
+
+        if (parts.Length > 3)
+        {
+            error = "Слишком много слов в ФИО";
+            return false;
+        }
+
+        last = parts[0];
+        first = parts[1];
+        middle = parts.Length == 3 ? parts[2] : "";
+
+        return true;
+    }
+
+    public void Dispose()
+    {
+        disposed = true;
+        Ui.Changed -= OnUiChanged;
+    }
+
     [Parameter] public string Search { get; set; } = "";
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+
+    IEnumerable<ApplicationUser> FilteredApplicants
+    {
+        get
+        {
+            IEnumerable<ApplicationUser> query = users;
+
+            /* ===== ПОИСК ===== */
+            var search = Ui.CurrentState.Search;
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+
+            query = query.Where(u =>
+                (!string.IsNullOrEmpty(u.LastName) &&
+                 u.LastName.Contains(s, StringComparison.OrdinalIgnoreCase))
+             || (!string.IsNullOrEmpty(u.FirstName) &&
+                 u.FirstName.Contains(s, StringComparison.OrdinalIgnoreCase))
+             || (!string.IsNullOrEmpty(u.MiddleName) &&
+                 u.MiddleName.Contains(s, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+
+            /* ===== СОРТИРОВКА ===== */
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var orderObj)
+                && orderObj is ApplicantsOrder order)
+            {
+                query = order switch
+                 {
+                    ApplicantsOrder.AZName => query.OrderBy(u => u.LastName),
+                    ApplicantsOrder.ZAName => query.OrderByDescending(u => u.LastName),
+                    ApplicantsOrder.LastDateLoginToNew => query.OrderBy(u=>u.LastLoginTime),
+                    ApplicantsOrder.LastDateLoginToOld => query.OrderByDescending(u => u.LastLoginTime),
+                    _ => query
+                };
+            }
+
+            return query;
+        }
+    }
+
+
+
+
 }

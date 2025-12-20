@@ -5,6 +5,8 @@ using DeLavantTechnologies.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using DeLavant.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using DeLavantTechnologies.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddScoped<UiState>();
+builder.Services.AddScoped<CourseEditUiState>();
 
 
 builder.Services.AddCascadingAuthenticationState();
@@ -39,6 +42,11 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     mongoDbSettings.ConnectionString,
     mongoDbSettings.Name)
 .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IMongoDbContext, MongoDbContext>();
+builder.Services.AddScoped<IPositionRepository, PositionRepository>();
+
+
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 

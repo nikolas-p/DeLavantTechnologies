@@ -53,7 +53,7 @@ namespace DeLavant.Infrastructure.Repositories
                 .Select(id => new ObjectId(id))
                 .ToList();
 
-            // Ищем все Step, где Id входит в список
+           
             var filter = Builders<Question>.Filter.In(s => s.Id, objectIds.Select(oid => oid.ToString()));
 
             return await _collection.Find(filter).ToListAsync();

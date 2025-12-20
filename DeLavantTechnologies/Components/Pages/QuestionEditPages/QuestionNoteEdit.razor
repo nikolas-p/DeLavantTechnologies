@@ -1,5 +1,20 @@
-﻿<h3>QuestionNoteEdit</h3>
+﻿<div>
+    <div class="d-flex justify-content-between">
+        <h6>Заметка</h6>
+        <div>
+            <button class="btn btn-sm btn-danger me-1" @onclick="Delete">Удалить</button>
+            <button class="btn btn-sm btn-primary" @onclick="Save">Сохранить</button>
+        </div>
+    </div>
+
+    <InputText class="form-control mb-2" @bind-Value="Question.Title" placeholder="Текст заметки" />
+</div>
 
 @code {
+    [Parameter] public Question Question { get; set; }
+    [Parameter] public EventCallback<Question> OnQuestionUpdated { get; set; }
+    [Parameter] public EventCallback<string> OnQuestionDeleted { get; set; }
 
+    private async Task Save() => await OnQuestionUpdated.InvokeAsync(Question);
+    private async Task Delete() => await OnQuestionDeleted.InvokeAsync(Question.Id);
 }

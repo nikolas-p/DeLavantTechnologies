@@ -1,0 +1,54 @@
+﻿@inject IJSRuntime JS
+
+<div class="course-edit-aside-column-left">
+    <div class="action-list">
+        <div id="@ContainerId" class="drag-drop-open">
+            @if (Steps != null)
+            {
+                @foreach (var step in Steps)
+                {
+                    <div class="drag-item square-action-icon square-list-ul-gray-icon" data-step-id="@step.Id">
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public List<Step> Steps { get; set; } = new();
+    [Parameter] public EventCallback<List<string>> OnOrderChanged { get; set; }
+     [Parameter] public Course Course { get; set; } = new();
+    [Parameter] public string ContainerId { get; set; } = $"drag-{Guid.NewGuid()}";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("sortableInit", ContainerId, DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateOrder(List<string> newOrder)
+    {
+        // Обновляем порядок Course.Elements
+        Course.Elements = newOrder;
+
+        // Переставляем Steps в соответствии с новым порядком
+        Steps = newOrder.Select(id => Steps.FirstOrDefault(s => s.Id == id)!).ToList();
+
+        // Сохраняем изменения сразу в БД
+        await CourseService.UpdateCourseAsync(Course);
+
+        StateHasChanged();
+
+        if (OnOrderChanged.HasDelegate)
+        {
+            await OnOrderChanged.InvokeAsync(newOrder);
+        }
+    }
+
+    [Inject] private ICourseService CourseService { get; set; } = default!;
+}

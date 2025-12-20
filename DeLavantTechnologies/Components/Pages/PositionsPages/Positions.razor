@@ -1,1 +1,270 @@
-﻿<h1>Должности</h1>
+﻿@using DeLavantTechnologies.Components.Pages.DestinationCourses
+@using DeLavantTechnologies.Repositories
+@using DeLavantTechnologies.Data
+@rendermode InteractiveServer
+@implements IEntityListPage
+@inject IPositionRepository PositionRepository
+@inject UiState Ui
+
+
+<div class="column">
+
+@* ---------- CREATE ---------- *@
+<div class="row-container create-row @(isCreating ? "open" : "")">
+    @if (isCreating)
+    {
+
+        <form @onsubmit="SaveCreate" class="edit-form">
+            <div class="row-container">
+            <button class="circle-button primary-purple check-circle-fill-icon"
+                    type="submit">
+            </button>
+
+            <div class="oneline-item-container">
+                <input class="edit-input"
+                       @bind="createName"
+                       @bind:event="oninput"
+                       placeholder="Название должности" />
+            </div>
+
+            <button class="circle-button primary-red x-circle-fill-icon"
+                    type="button"
+                    @onclick="CancelCreate">
+            </button>
+            </div>
+        </form>
+    }
+</div>
+
+
+<div class="column">
+        @foreach (var pos in FilteredPositions)
+        {
+        <div class="row-container expand-row @(editingId == pos.Id ? "editing" : "")">
+
+            @* ЛЕВАЯ КНОПКА *@
+            @if (editingId == pos.Id)
+            {
+                <button class="circle-button primary-purple check-circle-fill-icon"
+                        type="submit"
+                        form="edit-form-@pos.Id">
+                </button>
+            }
+            else
+            {
+                <button class="circle-button secondary-gray three-dots-circle-fill-icon"
+                        @onclick="() => StartEdit(pos)">
+                </button>
+            }
+
+            @* ЦЕНТР *@
+            <div class="oneline-item-container">
+                @if (editingId == pos.Id)
+                {
+                    <form id="edit-form-@pos.Id"
+                          class="edit-form"
+                          @onsubmit="() => SaveEdit(pos)">
+                        <input class="edit-input"
+                               @bind="editName"
+                               @bind:event="oninput" />
+                    </form>
+                }
+                else
+                {
+                    <span>@pos.Name</span>
+                }
+            </div>
+
+            @* ПРАВАЯ КНОПКА *@
+            @if (editingId == pos.Id)
+            {
+                <button class="circle-button secondary-gray x-circle-fill-icon"
+                        type="button"
+                        @onclick="CancelEdit">
+                </button>
+            }
+            else
+            {
+                <button class="circle-button primary-red x-circle-fill-icon @(deletePending.ContainsKey(pos.Id) ? "pulse" : "")"
+                @onclick="() => ToggleDelete(pos.Id)">
+                </button>
+            }
+        </div>
+    }
+</div>
+
+
+</div>
+@code {
+    private List<Position> positions = new();
+    private Guid? editingId;
+    private bool isCreating;
+    private string createName = ""; // Для формы создания
+    private string editName = "";   // Для редактирования
+
+    private Guid? deletePendingId;
+    private CancellationTokenSource deleteCts;
+    private Dictionary<Guid, CancellationTokenSource> deletePending = new();
+
+
+    private bool disposed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        positions = await PositionRepository.GetAllAsync();
+        Ui.Changed += OnUiChanged;
+    }
+
+    void OnUiChanged()
+    {
+        if (disposed) return;
+
+        // Если нажали кнопку создания через Toolbar
+        if (Ui.Entity == EntityType.Positions && Ui.Mode == PageMode.Edit && !isCreating)
+        {
+            // Закрываем редактирование любых открытых записей
+            if(!Ui.ShowLeft)
+            {
+            editingId = null;
+            StartCreate();
+            }
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ===== CREATE =====
+    void StartCreate()
+    {
+        isCreating = true;
+        createName = "";
+    }
+
+    async Task SaveCreate()
+    {
+        if (string.IsNullOrWhiteSpace(createName))
+            return;
+
+        await PositionRepository.CreateAsync(new Position { Name = createName });
+        positions = await PositionRepository.GetAllAsync();
+
+        isCreating = false;
+        Ui.SetMode(PageMode.List);
+    }
+
+    void CancelCreate()
+    {
+        isCreating = false;
+        Ui.SetMode(PageMode.List);
+    }
+
+    // ===== EDIT =====
+    void StartEdit(Position pos)
+    {
+        if (isCreating)
+        {
+            // Если была открыта форма создания — закрываем её
+            isCreating = false;
+        }
+
+        editingId = pos.Id;
+        editName = pos.Name;
+    }
+
+    async Task SaveEdit(Position pos)
+    {
+        pos.Name = editName;
+        await PositionRepository.UpdateAsync(pos);
+        editingId = null;
+    }
+
+    void CancelEdit()
+    {
+        editingId = null;
+    }
+
+    // ===== DELETE с мерцанием =====
+    private void ToggleDelete(Guid id)
+    {
+        if (deletePending.ContainsKey(id)){
+            // Повторное нажатие — отменяем удаление
+            deletePending[id].Cancel();
+            deletePending.Remove(id);
+            StateHasChanged();
+            return;
+        }
+        // Запускаем "подтверждение удаления"
+        var cts = new CancellationTokenSource();
+        deletePending[id] = cts;
+        StateHasChanged();
+
+        _ = DeleteWithDelay(id, cts.Token);
+    }
+
+
+    private async Task DeleteWithDelay(Guid id, CancellationToken token){
+        try{
+            await Task.Delay(5000, token);
+            await Delete(id);
+            }
+        catch (TaskCanceledException){
+            // Отмена удаления
+        }
+        finally {
+            if (deletePending.ContainsKey(id)){
+                deletePending.Remove(id);
+                StateHasChanged();
+            }
+        }
+    }
+    private async Task Delete(Guid id)
+    {
+        await PositionRepository.DeleteAsync(id);
+        positions.RemoveAll(p => p.Id == id);
+    }
+
+    public void Dispose()
+    {
+        disposed = true;
+        Ui.Changed -= OnUiChanged;
+    }
+
+    [Parameter] public string Search { get; set; } = "";
+    [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+
+    IEnumerable<Position> FilteredPositions
+    {
+        get
+        {
+            IEnumerable<Position> query = positions;
+
+            /* ===== ПОИСК ===== */
+            var search = Ui.CurrentState.Search;
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            /* ===== СОРТИРОВКА ===== */
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var orderObj)
+                && orderObj is PositionsOrder order)
+            {
+                query = order switch
+                 {
+                //     PositionsOrder.CountMore =>
+                //         query.OrderByDescending(p => p.Count),
+
+                //     PositionsOrder.CountSmall =>
+                //         query.OrderBy(p => p.Count),
+                    PositionsOrder.AZName => query.OrderBy(p => p.Name),
+                    PositionsOrder.ZAName => query.OrderByDescending(p => p.Name),
+                    _ => query
+                };
+            }
+
+            return query;
+        }
+    }
+
+}
