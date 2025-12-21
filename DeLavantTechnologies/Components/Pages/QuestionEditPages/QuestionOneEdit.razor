@@ -4,40 +4,68 @@
 @inject IQuestionService QuestionService
 @rendermode InteractiveServer
 
-<div>
-    <div class="d-flex justify-content-between">
-        <h6>Вопрос с одним ответом</h6>
-        <div>
-            <button class="btn btn-sm btn-danger me-1" type="button" @onclick="Delete">Удалить</button>
-            <button class="btn btn-sm btn-primary" type="button" @onclick="Save">Сохранить</button>
+@if (Question != null)
+{
+    <div class="item-content">
+        <!-- HEADER -->
+        <div class="item-content-header">
+            <div class="item-content-header-left">
+                <button class="circle-button primary-red x-circle-fill-icon" type="button"  @onclick="Delete"></button>
+            </div>
+            <div class="item-content-header-center">
+                <h6>Один ответ</h6>
+            </div>
+            <div class="item-content-header-right">
+                <button class="circle-button primary-purple check-circle-fill-icon" type="button" @onclick="Save"></button>
+            </div>
         </div>
-    </div>
 
-    <InputText class="form-control mb-2" @bind-Value="Question.Title" placeholder="Текст вопроса" @onblur="async _ => await Save()" />
+        <!-- MAIN -->
+        <div class="item-content-main">
 
-    @if (Question.Answers == null || !Question.Answers.Any())
-    {
-        <p>Ответы отсутствуют</p>
-    }
-    else
-    {
-        <InputRadioGroup @bind-Value="SelectedAnswerId"
-                 Name="@($"radio-{Question.Id}")">
-
-
-            @foreach (var answer in Question.Answers)
+            <InputText class="form-control" @bind-Value="Question.Title" placeholder="Текст вопроса" @onblur="async _ => await Save()" />
+            @if (Question.Answers == null || !Question.Answers.Any())
             {
-                <div class="input-group mb-1" @key="answer.Id">
-                    <InputRadio Value="answer.Id" class="form-check-input" />
-                    <InputText class="form-control" @bind-Value="answer.Value" @onblur="async _ => await Save()" />
-                    <button class="btn btn-sm btn-danger" type="button" @onclick="() => RemoveAnswer(answer.Id)">x</button>
-                </div>
+                <p>Ответы отсутствуют</p>
             }
-        </InputRadioGroup>
-    }
+            else
+            {
+                
+                    <InputRadioGroup @bind-Value="SelectedAnswerId"
+                    Name="@($"radio-{Question.Id}")">
 
-    <button class="btn btn-sm btn-outline-primary mt-1" type="button" @onclick="AddAnswer">Добавить ответ</button>
-</div>
+                        <div class="column">
+                        @foreach (var answer in Question.Answers)
+                        {
+                             <div class="column-row-item" @key="answer.Id">
+                                <InputRadio Value="answer.Id" class="radio-input"/>
+                                <InputTextArea  @bind-Value="answer.Value" @onblur="async _ => await Save()" />
+                                <button class="circle-button primary-red x-circle-fill-icon" type="button" @onclick="() => RemoveAnswer(answer.Id)">x</button>
+                            </div>
+                        }
+                         </div>
+                    </InputRadioGroup> 
+               
+            }
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="item-content-footer">
+            <div class="item-content-footer-center">
+                <button class="btn btn-sm btn-outline-primary mt-1" type="button" @onclick="AddAnswer">Добавить ответ</button>
+            </div>
+        </div>
+
+    </div>
+    <div>
+
+    </div>
+}
+else
+{
+    <h3>Создавайте</h3>
+}
 
 @code {
     [Parameter] public Question Question { get; set; }

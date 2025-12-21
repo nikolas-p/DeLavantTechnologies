@@ -84,6 +84,8 @@ namespace DeLavant.Application.Courses
             foreach (var stepId in removedSteps)
                 await _stepService.DeleteStepAsync(stepId);
 
+            updated.LastUpdatedAt = DateTime.UtcNow;
+
             await _courseRepository.UpdateCourseAsync(updated);
         }
 

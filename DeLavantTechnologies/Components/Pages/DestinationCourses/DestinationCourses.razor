@@ -1,45 +1,116 @@
-﻿@rendermode InteractiveServer
-@implements IEntityListPage
+﻿@using DeLavantTechnologies.Data
+@using DeLavant.Domain.Courses
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICourseRepository CourseRepository
+@inject UserManager<ApplicationUser> UserManager
+@attribute [Authorize]
 
-<h3>DestinationCourses</h3>
+<AuthorizeView>
+    <Authorized>
+        <h3>Список курсов</h3>
 
-
-
-<h3>Текущий поиск</h3>
-<p>@Search</p>
-
-<h3>Параметры фильтров</h3>
-@if (Parameters != null && Parameters.Count > 0)
-{
-    <ul>
-        @foreach (var kvp in Parameters)
+        @if (Courses == null)
         {
-            <li>
-                @kvp.Key :
-                @if (kvp.Value is IEnumerable<string> list)
-                {
-                    @string.Join(", ", list)
-                }
-                else
-                {
-                    @kvp.Value
-                }
-            </li>
+            <p>Загрузка...</p>
         }
-    </ul>
-}
-else
-{
-    <p>Нет параметров</p>
-}
+        else if (!Courses.Any())
+        {
+            <p>Нет доступных курсов</p>
+        }
+        else
+        {
+            <div class="courses-container">
+                @foreach (var course in Courses)
+                {
+                    var isCompleted = CurrentUser.CoursesComplated?.Contains(course.Id) ?? false;
+                    <button class="course-button @(isCompleted ? "completed" : "not-completed")"
+                            @onclick="() => ToggleCourseCompletion(course.Id)">
+                        @course.Title
+                    </button>
+                }
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>Вы не авторизованы</p>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
-    [Parameter] public string Search { get; set; } = "";
-    [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> AuthState { get; set; }
 
-   
-}
+    private List<Course> AllCourses = new();
+    private List<Course> Courses = new();
+    private ApplicationUser CurrentUser = new();
+    private IList<string> UserRoles = new List<string>();
 
-@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+        var userName = authState.User.Identity?.Name;
 
+        if (string.IsNullOrEmpty(userName))
+            return;
+
+        // Находим пользователя по username (Email)
+        CurrentUser = await UserManager.FindByNameAsync(userName);
+        if (CurrentUser == null)
+            return;
+
+        // Получаем имена ролей
+        UserRoles = await UserManager.GetRolesAsync(CurrentUser);
+
+        AllCourses = await CourseRepository.GetAllCoursesAsync();
+        FilterCourses();
+    }
+
+    private void FilterCourses()
+    {
+        Courses = new List<Course>();
+
+        if (UserRoles.Contains("Ones"))
+        {
+            // Пользователь с ролью "Ones" видит только курсы с AccessType = "Ones" и IsHidden = false
+            Courses.AddRange(AllCourses.Where(c => c.AccessType == "Ones" && !c.IsHidden));
+            return;
+        }
+
+        foreach (var course in AllCourses)
+        {
+            if (course.IsHidden)
+                continue; // скрытые курсы пропускаем
+
+            if (course.AccessType == "Common")
+            {
+                Courses.Add(course);
+            }
+            else if (course.AccessType == "Group" && course.Access != null && CurrentUser.Positions != null)
+            {
+                if (course.Access.Intersect(CurrentUser.Positions).Any())
+                    Courses.Add(course);
+            }
+            else if (course.AccessType == "Individual" && course.Access != null)
+            {
+                if (course.Access.Contains(CurrentUser.Id.ToString()))
+                    Courses.Add(course);
+            }
+        }
+    }
+
+
+    private async Task ToggleCourseCompletion(string courseId)
+    {
+        if (CurrentUser.CoursesComplated == null)
+            CurrentUser.CoursesComplated = new List<string>();
+
+        if (CurrentUser.CoursesComplated.Contains(courseId))
+            CurrentUser.CoursesComplated.Remove(courseId);
+        else
+            CurrentUser.CoursesComplated.Add(courseId);
+
+        await UserManager.UpdateAsync(CurrentUser);
+        StateHasChanged();
+    }
 }

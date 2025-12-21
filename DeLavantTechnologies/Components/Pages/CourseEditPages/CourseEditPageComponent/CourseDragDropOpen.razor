@@ -20,7 +20,7 @@
 @code {
     [Parameter] public List<Step> Steps { get; set; } = new();
     [Parameter] public EventCallback<List<string>> OnOrderChanged { get; set; }
-     [Parameter] public Course Course { get; set; } = new();
+    [Parameter] public Course Course { get; set; } = new();
     [Parameter] public string ContainerId { get; set; } = $"drag-{Guid.NewGuid()}";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

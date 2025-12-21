@@ -30,6 +30,11 @@
     --white: #ffffff;
     --black: #000000;
 }
+body{
+    font-family: var(--font-nunito), sans-serif;
+    color: var(--primary-gray);
+    
+}
 
 .primary-red {
     color: var(--primary-red, #b90844);

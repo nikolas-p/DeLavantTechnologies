@@ -1,55 +1,208 @@
-﻿@inject ICourseRepository CourseRepository
+﻿@using DeLavantTechnologies.Repositories
+@using Microsoft.AspNetCore.Identity
+@inject ICourseRepository CourseRepository
 @inject CourseEditUiState CourseEditUi
-
-<h2>Доступ к курсу</h2>
-
-<select @bind="Course.AccessType">
-    <option value="Public">Публичный</option>
-    <option value="Private">Приватный</option>
-</select>
-
-<textarea @bind="AccessRaw"
-          placeholder="ID пользователей через запятую">
-</textarea>
-
-<button class="square-button primary"
-        @onclick="Save">
-    Сохранить
-</button>
+@inject IPositionRepository PositionRepository
+@inject UserManager<ApplicationUser> UserManager
 
 
 
 
+<div class="fixed-center-aside-container">
+  <div class="center-aside-title">Доступ к курсу</div>
+
+<div class="two-columns">
+        <div class="left-column">
+            <div class="row-container">
+            <div class="radio-icon">
+                <input type="radio" id="common" name="AccessType" value="Common"
+                       checked="@(selectedType == "Common")"
+                       @onchange="OnAccessTypeChanged" />
+                <label for="common" class="icon common-icon"></label>
+            </div>
+
+            <div class="radio-icon">
+                <input type="radio" id="group" name="AccessType" value="Group"
+                       checked="@(selectedType == "Group")"
+                       @onchange="OnAccessTypeChanged" />
+                <label for="group" class="icon group-icon"></label>
+            </div>
+
+             <div class="radio-icon">
+                <input type="radio" id="individual" name="AccessType" value="Individual"
+                       checked="@(selectedType == "Individual")"
+                       @onchange="OnAccessTypeChanged" />
+                <label for="individual" class="icon individual-icon"></label>
+            </div>
+
+           <div class="radio-icon">
+                <input type="radio" id="ones" name="AccessType" value="Ones"
+                       checked="@(selectedType == "Ones")"
+                       @onchange="OnAccessTypeChanged" />
+                <label for="ones" class="icon ones-icon"></label>
+            </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <h1> 
+                @AccessTypeRu.GetValueOrDefault(selectedType, "")
+            </h1>
+           
+        </div>
+    </div>
 
 
 
+@if (@selectedType != "Common")
+{
+  
+       @if (selectedType == "Group")
+{
+    <div class="two-columns">
 
+        <!-- LEFT: доступные -->
+        <div class="left-column">
+            <div class="column">
+            @foreach (var p in allPositions.Where(p => !selectedAccess.Contains(p.Id.ToString())))
+            {
+                <div class="column-row-item">
+                    <div class="column-row-item-center"> @p.Name</div>
+                    <button @onclick="() => AddAccess(p.Id.ToString())" class="circle-button primary-purple plus-circle-fill-icon"></button>
+                </div>
+            }
+            </div>
+        </div>
 
+        <!-- RIGHT: выбранные -->
+        <div class="right-column">
+            <div class="column">
+            @foreach (var p in allPositions.Where(p => selectedAccess.Contains(p.Id.ToString())))
+            {
+                <div class="column-row-item">
+                    <button @onclick="() => RemoveAccess(p.Id.ToString())" class="circle-button primary-red dash-circle-fill-icon"></button>
+                    <div class="column-row-item-center">
+                    @p.Name
+                    </div>
+                </div>
+            }
+            </div>
+        </div>
 
+    </div>
+}
 
+       @if (selectedType == "Individual")
+{
+    <div class="two-columns">
+
+        <div class="left-column">
+            <div class="column">
+            @foreach (var u in allUsers.Where(u => !selectedAccess.Contains(u.Id.ToString())))
+            {
+                <div class="column-row-item">
+                    <div class="column-row-item-center">
+                        <div>@u.Email</div>
+                        <div>@u.LastName @u.FirstName @u.MiddleName</div>
+                    </div>
+                    <button @onclick="() => AddAccess(u.Id.ToString())" class="circle-button primary-purple plus-circle-fill-icon"></button>
+                </div>
+            }
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="column">
+            @foreach (var u in allUsers.Where(u => selectedAccess.Contains(u.Id.ToString())))
+            {
+                 <div class="column-row-item">
+                    <button @onclick="() => RemoveAccess(u.Id.ToString())" class="circle-button primary-red dash-circle-fill-icon"></button>
+                    <div class="column-row-item-center">
+                        <div>@u.Email</div>
+                        <div>@u.LastName @u.FirstName @u.MiddleName</div>
+                    </div>
+                </div>
+            }
+            </div>
+        </div>
+
+    </div>
+}
+
+ 
+    }
+</div>
 
 
 @code {
+    private string selectedType = "Common";
+
+    private static readonly Dictionary<string, string> AccessTypeRu = new()
+{
+    ["Common"] = "Общий доступ",
+    ["Group"] = "По группам",
+    ["Individual"] = "Индивидуальный",
+    ["Ones"] = "Гостевой"
+};
+
+
     [Parameter] public string CourseId { get; set; } = default!;
     [Parameter] public Course Course { get; set; } = default!;
+    private List<Position> allPositions = new();
+private List<ApplicationUser> allUsers = new();
 
+// выбранные ID (для быстрой проверки)
+private HashSet<string> selectedAccess = new();
 
-    private string AccessRaw = "";
 
 protected override async Task OnInitializedAsync()
+{
+     selectedType = Course?.AccessType ?? "Common";
+
+    if (Course is not null && !string.IsNullOrEmpty(Course.AccessType))
     {
-        AccessRaw = string.Join(", ", Course.Access ?? []);
+        selectedType = Course.AccessType;
     }
+     // 🔴 ВАЖНО: загрузка выбранных ID
+    selectedAccess = Course.Access?.ToHashSet() ?? new HashSet<string>();
 
-    async Task Save()
+    allPositions = await PositionRepository.GetAllAsync();
+
+        foreach (var user in UserManager.Users.ToList())
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+
+            if (!roles.Contains("Ones"))
+                allUsers.Add(user);
+        }
+}
+
+    private async Task OnAccessTypeChanged(ChangeEventArgs e)
     {
-        Course.Access = AccessRaw
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(x => x.Trim())
-            .ToList();
-
+        selectedType = e.Value?.ToString() ?? "Common";
+        Course.AccessType = selectedType;
+         Course.Access.Clear();
+        selectedAccess.Clear();
         await CourseRepository.UpdateCourseAsync(Course);
-        CourseEditUi.CloseAdditional();
     }
-    // здесь логика изменения Course.AccessType и Course.Access
+
+    private async Task AddAccess(string id)
+{
+    if (selectedAccess.Add(id))
+    {
+        Course.Access = selectedAccess.ToList();
+        await CourseRepository.UpdateCourseAsync(Course);
+    }
+}
+
+private async Task RemoveAccess(string id)
+{
+    if (selectedAccess.Remove(id))
+    {
+        Course.Access = selectedAccess.ToList();
+        await CourseRepository.UpdateCourseAsync(Course);
+    }
+}
+
+
 }

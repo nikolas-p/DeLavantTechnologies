@@ -11,7 +11,6 @@
 .item-content {
     position: relative;
     width: auto;              /* 🔥 растягиваем */
-    max-width: 60rem;         /* для примера */
     min-width: 30rem;         /* 🔥 защита от сжатия */
     margin: 2rem;
     border-radius: 3rem;
@@ -78,10 +77,8 @@
 
 /* ================= FOOTER ================= */
 
-
 /* левая часть */
 .item-content-footer-left {
-   
     width: max-content;
     margin-left: 1rem;
 }
@@ -89,7 +86,6 @@
 
 /* правая часть */
 .item-content-footer-right {
-   
     width: max-content;
     margin-left: auto;
     margin-right: 1rem;
@@ -109,41 +105,92 @@
     margin-bottom: 2rem;
    
 
-    display: flex;              /* 🔥 делаем flex */
-    flex-direction: column;     /* 🔥 элементы в колонку */
-    align-items: center;        /* 🔥 центр по горизонтали */
+    display: flex;              
+    flex-direction: column;     
+    align-items: center;        
 }
-
 .column {
-    display: flex;             /* элементы в строку */
-    flex-direction: column;       /* на всякий случай явно */
-    gap: 1rem;                 /* расстояние между элементами */
-    align-items: center;       /* выравнивание по вертикали (по высоте) */
-    flex-wrap: wrap;           /* если элементов много, перенос на новую строку */
+    width: 100%;
+    display: flex;             
+    flex-direction: column;      
+    gap: 1rem;                 
+    align-items: center;      
+       
     height: auto;
     padding: 2rem 0;
+}
 
+.column-row-item
+{
+    width: 100%;
+    display: flex;
+    align-items: center;        /* выравнивание по высоте */
+    height: auto;
+
+    gap: 0.5rem;                /* расстояние между элементами */
+
+    box-sizing: border-box;
+}
+.column-row-item-center{
+    flex: 1  auto;             /* занимает всё свободное место */
+    max-height: 5rem;
+    min-height: 2rem;
+    height: auto;
+    width: 90%;
+    box-sizing: border-box;
+    display: flex;           /* делаем flex */
+    flex-direction: column;  /* элементы идут в колонку */
+
+    justify-content: center; /* ✅ вертикальное центрирование */
+    align-items: stretch;    /* по ширине на всю колонку */
+}
+.two-columns .column-row-item
+{
+    border: 1px solid var(--primary-gray);
+    border-radius: 1.7rem;
+    padding: 0.5rem;
+}
+.two-columns .column
+{
+     max-height: 20rem;   /* 🔒 ограничение по высоте */
+    overflow-y: auto;    /* 📜 вертикальный скролл при переполнении */
+    /* скрываем скролл */
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* IE / Edge legacy */
+}
+
+.two-columns.column::-webkit-scrollbar {
+    display: none;                /* Chrome / Safari */
+}
+
+.column-row-item textarea {
+    flex: 1 1 auto;             /* занимает всё свободное место */
+    max-height: 5rem;
+    min-height: 2rem;
+    height: auto;
+    resize: none;               /* отключаем ручное растягивание */
+
+    border-radius: 1rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 1.2rem;
+    border: 1px solid var(--secondary-gray);
+
+    box-sizing: border-box;
 }
 
 .row-container {
     display: flex;             /* элементы в строку */
-    flex-direction: row;       /* на всякий случай явно */
-    gap: 1rem;                 /* расстояние между элементами */
-    align-items: center;       /* выравнивание по вертикали (по высоте) */
-    flex-wrap: wrap;           /* если элементов много, перенос на новую строку */
+    flex-direction: row;       
+    gap: 1rem;                 
+    align-items: center;       
+    flex-wrap: wrap;          
 
-     transition: all 0.25s ease;
-}
-/* БАЗОВЫЙ КОНТЕЙНЕР */
-.row-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    transition: all 0.25s ease;
 }
 
 /* СОСТОЯНИЕ ОТКРЫТО */
 .row-container.open {
-    min-height: 5rem;           /* ✅ ровно 5rem */
+    min-height: 5rem;           
     height: auto;
     opacity: 1;
 }
@@ -191,9 +238,9 @@
     font-weight: var(--weight-extrabold);
 }
 .column-item-container {
-    flex-direction: column; /* колонки */
-    gap: 1rem;              /* расстояние между элементами */
-    align-items: flex-start; /* выравниваем элементы слева */
+    flex-direction: column; 
+    gap: 1rem;              
+    align-items: flex-start;
 }
 
 .row-container.open {
@@ -220,7 +267,278 @@
 
 /* Когда режим создания активен */
 .create-container.expand-row.open {
-   max-height: 200px; /* или больше */
+    max-height: 200px; /* или больше */
     opacity: 1;
     transform: scaleY(1);
+}
+
+.status-message {
+    background-color: rgba(255, 255, 255, 0.5);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #9F9F9F;
+    padding: 0.5rem 2rem;
+    border-radius: 0.5rem;
+    position: fixed;
+    top: 5rem;
+    left: 50%;
+    transform: translateX(-50%); /* горизонтальный центр фиксирован */
+
+     font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-extrabold);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 3rem;
+    box-shadow:  0 0 30px rgba(0,0,0,0.15);;
+
+    /* Плавная анимация появления */
+    animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    z-index: 40;
+}
+
+/* Анимация появления только по вертикали и opacity */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Анимация скрытия через 10 секунд */
+.status-message.fade-out {
+    animation: fadeOut 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+
+/* Основной контейнер */
+.record-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;          /* по горизонтали */
+    margin-top: 3rem;
+    width: 70vw;                  /* около 70% от экрана */
+    max-width: 43.75rem;          /* 700px / 16 */
+    min-width: 25rem;             /* 400px / 16 */
+    box-sizing: border-box;
+    gap: 1rem;
+}
+
+/* Блок с кнопками слева и справа */
+.record-sheet-recording {
+    display: flex;
+    flex-direction: row;
+    align-items: center;           /* выравнивание по высоте */
+    justify-content: center;       /* по центру по горизонтали */
+    width: auto;
+    gap: 1rem;                     /* расстояние между кнопками */
+}
+
+/* Внутренний контент в колонку */
+.record-sheet-recording-content {
+    display: flex;
+    flex-direction: column;
+         /* по центру */
+    justify-content: center;
+    width: 100%;
+         
+    min-width: 45rem;             
+    box-sizing: border-box;
+    background: rgb(255, 255, 255);
+    padding: 1rem 2rem;
+    border-radius: 2rem;
+      font-family: var(--font-nunito), sans-serif;
+    font-weight: var(--weight-extrabold);
+}
+
+/* Short-info блок */
+.short-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    width: auto;
+    gap: 1rem;
+    height: auto;
+    margin-bottom: 1rem;
+}
+.short-info .centered-element {
+    gap: 1rem;
+    display: flex;                 /* flex для центрирования */
+    justify-content: center;       /* горизонтальное центрирование */
+    align-items: center;           /* вертикальное центрирование */
+    border-radius: 2rem;
+    padding: 0.4rem 0.4rem 0.4rem 2rem;       /* внутренний отступ */
+    box-sizing: border-box;        /* чтобы паддинг учитывался в ширине/высоте */
+   
+    height: auto;
+
+background: #f2f2f2ad;
+box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.2);
+
+}
+.short-info .centered-element .accent{
+    justify-content: center;       /* горизонтальное центрирование */
+    align-items: center;           /* вертикальное центрирование */
+    border-radius: 1rem;
+    padding: 0.2rem 3rem; 
+    background: rgba(222, 222, 222, 0.558);
+          /* внутренний отступ */
+}
+.short-info .centered-element .accent-red {
+    display: inline-flex;           /* или flex, если нужно выравнивание */
+    justify-content: center;        /* горизонтальное центрирование */
+    align-items: center;            /* вертикальное центрирование */
+    border-radius: 1rem;
+    padding: 0.2rem 1rem; 
+    background: var(--primary-red);
+    color: white;
+    width: auto;
+    min-width: 6rem;
+    max-width: 15rem;               /* ограничение максимальной ширины */
+    text-align: center;
+
+    white-space: nowrap;            /* запрещаем перенос */
+    overflow: hidden;               /* скрываем переполнение */
+    text-overflow: ellipsis;        /* добавляем многоточие */
+}
+
+.short-info .centered-element .accent-gray{
+     justify-content: center;       /* горизонтальное центрирование */
+    align-items: center;           /* вертикальное центрирование */
+    border-radius: 1rem;
+    padding: 0.2rem 1rem; 
+    background: var(--secondary-gray);
+    color: white;
+    width: auto;
+    min-width: 6rem ;
+    text-align: center;
+}
+
+/* Текстовый блок с ограничением высоты 2 строки */
+.text-block {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;        /* ограничение в 2 строки */
+    -webkit-box-orient: vertical;
+    line-height: 1.7rem;          /* высота строки */
+    font-size: 1.5rem;
+    
+}
+.text-block span{
+    font-size: 1rem;
+}
+.positions-block {
+    width: 20rem;                /* фиксированная ширина блока */
+    height: 7rem;            /* максимальная высота блока */
+    overflow-y: auto;            /* вертикальная прокрутка, если не помещается */
+    display: flex;
+    flex-direction: column;      /* элементы внутри в колонку */
+    gap: 1rem;
+    align-content: center;                 /* отступ между элементами, можно настроить */
+    text-align: center;
+}
+
+.positions-block .item {
+    width: 100%;                  /* элемент занимает всю ширину блока */
+    overflow: hidden;             /* обрезаем текст, который не помещается */
+    text-overflow: ellipsis;      /* многоточие для переполнения текста */
+         /* текст в одну строку */
+    
+    display: flex;                /* для выравнивания содержимого */
+    align-items: center;          /* вертикальное центрирование текста */
+    justify-content: center;      /* горизонтальное центрирование текста */
+    
+    padding: 0.2rem 0.5rem;       /* внутренние отступы */
+    box-sizing: border-box;       /* чтобы padding не увеличивал ширину */
+    background: var(--primary-red);
+    color: white;
+    border-radius: 2rem;
+    margin-bottom: 0.5rem;
+}
+.form-control {
+    font-size: 1.5rem;        /* размер текста */
+    padding: 0.5rem 1rem;     /* внутренние отступы */
+    border: 1px solid #ccc;   /* граница */
+    border-radius: 0.5rem;    /* скругление углов */
+    width: 100%;              /* растянуть на всю ширину родителя */
+    box-sizing: border-box;   /* padding не увеличивает ширину */
+    outline: none;            /* убрать стандартный outline */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* плавное выделение */
+}
+
+.form-control:focus {
+    border-color: #007bff;    /* цвет границы при фокусе */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* легкая тень */
+}
+h4{
+    width: 100%;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Контейнер кнопки */
+.button-container {
+    width: 100%;               /* контейнер занимает всю ширину */
+    display: flex;
+    justify-content: center;   /* выравнивание по горизонтали */
+    margin: 1rem 0;            /* отступ сверху/снизу */
+}
+
+/* Сама кнопка */
+.centered-button {
+    background-color: var(--primary-purple); /* основной цвет кнопки */
+    color: white;                            /* цвет текста */
+    border: none;
+    border-radius: 3rem;                  /* скругление углов */
+    padding: 0.75rem 1.5rem;                /* внутренние отступы */
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;             /* плавный переход для hover/active */
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2); /* легкая тень */
+}
+
+/* Эффект нажатия */
+.centered-button:active {
+    filter: brightness(60%);   /* уменьшение насыщенности */
+    opacity: 0.6;              /* полупрозрачность */
+    transform: scale(0.98);    /* легкое сжатие кнопки */
+}
+.courses-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.course-button {
+    width: 10rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.course-button.completed {
+    background-color: var(--primary-green);
+    color: white;
+}
+
+.course-button.not-completed {
+    background-color: white;
+    border: 1px solid var(--primary-purple);
+    color: var(--primary-purple);
+}
+
+.course-button:hover {
+    filter: brightness(0.85);
 }

@@ -1,5 +1,6 @@
 ﻿@using DeLavantTechnologies.Data.Enum
 @using DeLavantTechnologies.Repositories
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @rendermode InteractiveServer
 @implements IEntityListPage
@@ -7,111 +8,175 @@
 @inject IPositionRepository PositionRepository
 @inject NavigationManager NavigationManager
 @inject UiState Ui
+@attribute [Authorize(Roles = "Admin")]
 
-<h3>Текущий поиск</h3>
-<p>@Search</p>
 
-<h3>Параметры фильтров</h3>
-@if (Parameters != null && Parameters.Count > 0)
-{
-    <ul>
-        @foreach (var kvp in Parameters)
-        {
-            <li>
-                @kvp.Key :
-                @if (kvp.Value is IEnumerable<string> list)
-                {
-                    @string.Join(", ", list)
-                }
-                else
-                {
-                    @kvp.Value
-                }
-            </li>
-        }
-    </ul>
-}
-else
-{
-    <p>Нет параметров</p>
-}
-<h3>Пользователи</h3>
 
-<button class="btn btn-primary mb-3" @onclick="CreateNew">Добавить пользователя</button>
+    <div class="record-sheet">
+        @foreach (var user in FilteredUsers)
+    {
+        <div class="record-sheet-recording">
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ФИО</th>
-            <th>Email</th>
-            <th>Должности</th>
-            <th>Действия</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in FilteredApplicants)
-        {
-            <tr>
-                <td>@($"{user.LastName} {user.FirstName} {user.MiddleName}")</td>
-                <td>@user.Email</td>
-                <td>
-                    @{
-                        if (userPositions.TryGetValue(user.Id, out var positions))
-                        {
-                            @string.Join(", ", positions)
-                        }
-                        else
-                        {
-                            <em>Нет должностей</em>
-                        }
-                    }
-                </td>
+            <button class="circle-button primary-red x-circle-fill-icon @(deletePending.ContainsKey(user.Id) ? "pulse" : "")"
+            @onclick="() => ToggleUserDelete(user.Id)">
+            </button>
 
-                <td>
-                    <button class="btn btn-sm btn-secondary" @onclick="() => Edit(user.Id)">Редактировать</button>
-                    <button class="btn btn-sm btn-danger" @onclick="() => Delete(user.Id)">Удалить</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+            <div class="record-sheet-recording-content">
+            <div class="record-sheet-recording" >
+               
+                <div class="text-block">
+                    @user.FirstName @user.LastName @user.MiddleName
+                    <br />
+                    @user.Email
+                    <br />
+                    <span>
+    @(user.LastLoginTime.HasValue
+        ? $"заходил(а) {ToMoscowTime(user.LastLoginTime.Value).ToString("dd.MM HH:mm")}"
+        : "не заходил(а)")
+</span>
+
+                </div>
+            
+
+             <div class="positions-block">
+                <div class="centered-element">
+                    Должности
+                            @{
+                                if (userPositions.TryGetValue(user.Id, out var positions))
+                                {
+                                    foreach(var pos in positions)
+                                    {
+                                    <div class="item">
+                                        @pos
+                                     </div>
+                                    }    
+                                    if(positions.Count ==0)
+                                    {
+                                    <div class="item">
+                                        без должности
+                                    </div>
+                                    }
+                                }
+                                else
+                                {
+                                  
+                                }
+                            }
+                        </div>
+                        </div>
+                </div>
+            </div>
+
+            <button class="circle-button secondary-gray arrow-right-circle-fill-icon"   @onclick="() => Edit(user.Id)"></button>
+
+        </div>
+    }
+
+</div>
+
 
 @code {
+
+    private static DateTime ToMoscowTime(DateTime utcDate)
+    {
+        var moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Russian Standard Time" : "Europe/Moscow"
+        );
+
+        return TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.SpecifyKind(utcDate, DateTimeKind.Utc),
+            moscowTimeZone
+        );
+    }
     private List<ApplicationUser> users = new();
     private Dictionary<Guid, List<string>> userPositions = new();
+    private Dictionary<Guid, CancellationTokenSource> deletePending = new();
+
 
     protected override async Task OnInitializedAsync()
     {
-        users = UserManager.Users.ToList();
+        users.Clear();
+
+        foreach (var user in UserManager.Users)
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+            if (!roles.Contains("Ones"))
+                users.Add(user);
+        }
+
         var positions = await PositionRepository.GetAllAsync();
 
         foreach (var user in users)
         {
             userPositions[user.Id] = positions
-                .Where(p => user.Positions.Contains(p.Id))
+                .Where(p => user.Positions.Contains(p.Id.ToString()))
                 .Select(p => p.Name)
                 .ToList();
         }
     }
 
-    void CreateNew() => NavigationManager.NavigateTo("/users/edit");
-
     void Edit(Guid id) => NavigationManager.NavigateTo($"/users/edit/{id}");
 
-    async Task Delete(Guid id)
+    private void ToggleUserDelete(Guid userId)
     {
-        var user = await UserManager.FindByIdAsync(id.ToString());
-        if (user != null)
+        if (deletePending.ContainsKey(userId))
         {
-            await UserManager.DeleteAsync(user);
-            users = UserManager.Users.ToList();
+            // Отмена удаления
+            deletePending[userId].Cancel();
+            deletePending.Remove(userId);
+            StateHasChanged();
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        deletePending[userId] = cts;
+        StateHasChanged();
+
+        _ = DeleteUserWithDelay(userId, cts.Token);
+    }
+
+
+    private async Task DeleteUserWithDelay(Guid userId, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(5000, token);
+            await DeleteUser(userId);
+        }
+        catch (TaskCanceledException)
+        {
+            // пользователь отменил
+        }
+        finally
+        {
+            if (deletePending.ContainsKey(userId))
+            {
+                deletePending.Remove(userId);
+                StateHasChanged();
+            }
         }
     }
+
+
+    private async Task DeleteUser(Guid userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return;
+
+        await UserManager.DeleteAsync(user);
+
+        users.RemoveAll(u => u.Id == userId);
+        userPositions.Remove(userId);
+
+        StateHasChanged();
+    }
+
 
     [Parameter] public string Search { get; set; } = "";
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
 
-    IEnumerable<ApplicationUser> FilteredApplicants
+    IEnumerable<ApplicationUser> FilteredUsers
     {
         get
         {
@@ -150,5 +215,4 @@ else
             return query;
         }
     }
-
 }

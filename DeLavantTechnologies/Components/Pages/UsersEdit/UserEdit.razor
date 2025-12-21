@@ -1,118 +1,284 @@
-﻿@page "/users/edit/{Id:guid?}"
+﻿@page "/users/edit/{UserId?}"
+@page "/users/edit"
+@layout AuthLayout
+@rendermode InteractiveServer
+@using DeLavantTechnologies.Components.Account.Pages
+@using DeLavantTechnologies.Data
 @using DeLavantTechnologies.Repositories
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<ApplicationUser> UserManager
-@inject IPositionRepository PositionRepository
+@inject IUserStore<ApplicationUser> UserStore
 @inject NavigationManager NavigationManager
+@inject IPositionRepository PositionRepository
+@inject ILogger<Register> Logger
+@inject UserEditorService UserEditorService
+@inject UiState Ui
+@attribute [Authorize(Roles = "Admin")]
 
-<h3>@(Id.HasValue ? "Редактировать пользователя" : "Создать пользователя")</h3>
-
-<EditForm EditContext="editContext" OnValidSubmit="Save">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="mb-3">
-        <label>Фамилия</label>
-        <InputText class="form-control" @bind-Value="user.LastName" />
+<div class="auth-toolbar title">
+    <div class="toolbar-block left">
+        @if (EntityNavDefinitions.EntityNavMap.TryGetValue(Ui.Entity, out var info))
+        {
+            <div class="nav-link" style="@info.Style" role="button" tabindex="0" @onclick="GoToAuth">
+                <span class="square-icon @info.IconClass"></span>
+                <span class="nav-text">@info.Title</span>
+            </div>
+        }
     </div>
 
-    <div class="mb-3">
-        <label>Имя</label>
-        <InputText class="form-control" @bind-Value="user.FirstName" />
+    <div class="toolbar-block center">
+        <h3>@(IsNewUser ? "Создание пользователя" : "Редактирование пользователя")</h3>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label>Отчество</label>
-        <InputText class="form-control" @bind-Value="user.MiddleName" />
-    </div>
+@if (!string.IsNullOrEmpty(StatusMessageText))
+{
+    <div class="status-message">@StatusMessageText</div>
+}
 
-    <div class="mb-3">
-        <label>Email</label>
-        <InputText class="form-control" @bind-Value="user.Email" />
-    </div>
+<main role="main" class="auth-shell-content">
+    <div class="item-content">
 
-    <div class="mb-3">
-        <label>Должности</label>
-        <div class="d-flex gap-2 mb-2">
-            <select class="form-select" @bind="selectedPositionId">
-                <option value="">-- выбрать --</option>
-                @foreach (var pos in positions)
+        <div class="item-content-header">
+            <div class="item-content-header-left">
+                @if (!IsNewUser)
                 {
-                    <option value="@pos.Id">@pos.Name</option>
+                    <button class="circle-button primary-red x-circle-fill-icon" @onclick="DeleteUser">Удалить</button>
                 }
-            </select>
-            <button type="button" class="btn btn-sm btn-primary" @onclick="AddPosition">Добавить</button>
+            </div>
+
+            <div class="item-content-header-center">
+                @if (!IsNewUser && User != null)
+                {
+                    <span>
+                        @(User.LastLoginTime.HasValue
+                            ? $"последний визит {User.LastLoginTime.Value.AddHours(4):dd.MM.yyyy HH:mm:ss}"
+                            : "не заходил")
+                    </span>
+                }
+            </div>
+
+            <div class="item-content-header-right">
+                <button class="circle-button primary-purple check-circle-fill-icon" type="button" @onclick="SaveAllChanges">Сохранить</button>
+            </div>
         </div>
 
-        <ul>
-            @foreach (var posId in user.Positions)
-            {
-                var pos = positions.FirstOrDefault(p => p.Id == posId);
-                if (pos != null)
-                {
-                    <li>
-                        @pos.Name
-                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemovePosition(pos.Id)">x</button>
-                    </li>
-                }
-            }
-        </ul>
-    </div>
+        <!-- MAIN -->
+        <div class="item-content-main">
+            <EditForm Model="@Input" FormName="UserEditForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-    <button type="submit" class="btn btn-primary">Сохранить</button>
-    <button type="button" class="btn btn-secondary" @onclick="Cancel">Отмена</button>
-</EditForm>
+                <!-- ФИО -->
+                <div>
+                    <h4>Фамилия Имя Отчество</h4>
+                    <InputText @bind-Value="Input.FullName" class="form-control"
+                               placeholder="Фамилия Имя Отчество" />
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <h4>Email для входа</h4>
+                    <InputText @bind-Value="Input.Email" class="form-control" />
+                </div>
+
+                <!-- Пароль -->
+                <div>
+                    <h4>Пароль</h4>
+                    <InputText type="password" @bind-Value="Input.Password" class="form-control" />
+                </div>
+
+                <!-- Роль -->
+                <h4>Права</h4>
+                <div class="radio-list">
+                    <InputRadioGroup @bind-Value="Input.SelectedRole">
+                        @foreach (var role in new[] { "Admin", "User" })
+                        {
+                            <div class="radio-item">
+                                <InputRadio Value="@role" class="radio-input" />
+                                <span class="radio-label">@role</span>
+                            </div>
+                        }
+                    </InputRadioGroup>
+                </div>
+
+                <!-- Должности -->
+                <h4>Должности</h4>
+                <div class="two-columns">
+                    <div class="left-column">
+                        <div class="column">
+                            @foreach (var p in AllPositions.Where(p => !SelectedPositions.Contains(p.Id.ToString())))
+                            {
+                                <div class="column-row-item">
+                                    <div class="column-row-item-center">@p.Name</div>
+                                    <button type="button" class="circle-button primary-purple plus-circle-fill-icon"
+                                            @onclick="() => AddPosition(p.Id.ToString())"></button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="right-column">
+                        <div class="column">
+                            @foreach (var p in AllPositions.Where(p => SelectedPositions.Contains(p.Id.ToString())))
+                            {
+                                <div class="column-row-item">
+                                    <button type="button" class="circle-button primary-red dash-circle-fill-icon"
+                                            @onclick="() => RemovePosition(p.Id.ToString())"></button>
+                                    <div class="column-row-item-center">@p.Name</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</main>
 
 @code {
-    [Parameter] public Guid? Id { get; set; }
+    [Parameter] public string? UserId { get; set; }
 
-    private ApplicationUser user = new();
-    private List<Position> positions = new();
-    private Guid? selectedPositionId;
-    private EditContext editContext;
+    private bool IsNewUser => string.IsNullOrEmpty(UserId);
+    private ApplicationUser? User;
+    private InputModel Input = new();
+    private HashSet<string> SelectedPositions = new();
+    private List<Position> AllPositions = new();
+    private string StatusMessageText = "";
+    private CancellationTokenSource? StatusCancellationToken;
 
     protected override async Task OnInitializedAsync()
     {
-        positions = await PositionRepository.GetAllAsync();
+        AllPositions = await PositionRepository.GetAllAsync();
 
-        if (Id.HasValue)
+        if (IsNewUser)
         {
-            user = await UserManager.FindByIdAsync(Id.Value.ToString()) ?? new ApplicationUser();
-        }
-
-        // Убедимся, что Positions не null
-        user.Positions ??= new List<Guid>();
-
-        editContext = new EditContext(user);
-    }
-
-    private void AddPosition()
-    {
-        if (selectedPositionId.HasValue && !user.Positions.Contains(selectedPositionId.Value))
-        {
-            user.Positions.Add(selectedPositionId.Value);
-        }
-    }
-
-    private void RemovePosition(Guid posId)
-    {
-        user.Positions.Remove(posId);
-    }
-
-    private async Task Save()
-    {
-        if (!Id.HasValue)
-        {
-            user.UserName = user.Email;
-            await UserManager.CreateAsync(user);
+            // Создаем пустого пользователя для привязки
+            User = new ApplicationUser();
         }
         else
         {
-            await UserManager.UpdateAsync(user);
+            User = await UserManager.FindByIdAsync(UserId);
+            if (User != null)
+            {
+                Input = new InputModel
+                    {
+                        FullName = $"{User.LastName} {User.FirstName} {User.MiddleName}".Trim(),
+                        Email = User.Email,
+                        SelectedRole = (await UserManager.GetRolesAsync(User)).FirstOrDefault() ?? "User"
+                    };
+                SelectedPositions = User.Positions?.ToHashSet() ?? new HashSet<string>();
+            }
         }
-
-        NavigationManager.NavigateTo("/users");
     }
 
-    private void Cancel() => NavigationManager.NavigateTo("/users");
+    private async Task SaveAllChanges()
+    {
+        if (string.IsNullOrWhiteSpace(Input.FullName) || string.IsNullOrWhiteSpace(Input.Email) || string.IsNullOrWhiteSpace(Input.Password))
+        {
+            ShowStatus("Заполните ФИО, Email и Пароль");
+            return;
+        }
+
+        if (User == null) return;
+
+        if (IsNewUser)
+        {
+            // Разделяем ФИО на компоненты
+            var parts = Input.FullName.Split(' ');
+            User.LastName = parts.Length > 0 ? parts[0] : "";
+            User.FirstName = parts.Length > 1 ? parts[1] : "";
+            User.MiddleName = parts.Length > 2 ? parts[2] : "";
+            User.Email = Input.Email;
+            User.UserName = Input.Email;
+            User.Positions = SelectedPositions.ToList();
+
+            var result = await UserManager.CreateAsync(User, Input.Password);
+            if (result.Succeeded)
+            {
+                ShowStatus("Пользователь успешно создан");
+                NavigationManager.NavigateTo("/users/edit/" + User.Id);
+            }
+            else
+            {
+                ShowStatus(string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
+        }
+        else
+        {
+            var parts = Input.FullName.Split(' ');
+            User.LastName = parts.Length > 0 ? parts[0] : "";
+            User.FirstName = parts.Length > 1 ? parts[1] : "";
+            User.MiddleName = parts.Length > 2 ? parts[2] : "";
+            User.Email = Input.Email;
+            User.UserName = Input.Email;
+            User.Positions = SelectedPositions.ToList();
+
+            var result = await UserManager.UpdateAsync(User);
+            if (result.Succeeded)
+            {
+                ShowStatus("Пользователь успешно обновлен");
+            }
+            else
+            {
+                ShowStatus(string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
+        }
+    }
+
+    private async Task AddPosition(string id)
+    {
+        SelectedPositions.Add(id);
+        StateHasChanged();
+    }
+
+    private async Task RemovePosition(string id)
+    {
+        SelectedPositions.Remove(id);
+        StateHasChanged();
+    }
+
+    private void ShowStatus(string message)
+    {
+        StatusMessageText = message;
+        StatusCancellationToken?.Cancel();
+        StatusCancellationToken = new CancellationTokenSource();
+        var token = StatusCancellationToken.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(6000, token);
+                StatusMessageText = "";
+                await InvokeAsync(StateHasChanged);
+            }
+            catch { }
+        });
+
+        StateHasChanged();
+    }
+
+    private void GoToAuth()
+    {
+        NavigationManager.NavigateTo("/Auth");
+    }
+
+    private async Task DeleteUser()
+    {
+        if (User == null) return;
+        var result = await UserManager.DeleteAsync(User);
+        if (result.Succeeded)
+            NavigationManager.NavigateTo("/Auth");
+        else
+            ShowStatus("Ошибка при удалении пользователя");
+    }
+
+    private class InputModel
+    {
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string SelectedRole { get; set; } = "User";
+    }
 }

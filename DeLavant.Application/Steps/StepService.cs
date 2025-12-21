@@ -41,6 +41,9 @@ namespace DeLavant.Application.Steps
         }
         public async Task SaveStepAsync(Step step)
         {
+            if (step == null)
+                throw new ArgumentNullException(nameof(step));
+
             var existing = string.IsNullOrEmpty(step.Id)
                 ? null
                 : await _stepRepository.GetStepByIdAsync(step.Id);
@@ -64,7 +67,10 @@ namespace DeLavant.Application.Steps
                 if (el.IsTest && el.Id != null)
                 {
                     var test = await _testService.GetTestByIdAsync(el.Id);
-                    await _testService.SaveTestAsync(test);
+                    if (test != null)
+                    {
+                        await _testService.SaveTestAsync(test);
+                    }
                 }
                 //else if (!el.IsTest && el.Lecture != null)
                 //    await _lectureRepository.SaveAsync(el.Lecture);

@@ -35,12 +35,13 @@
                     <div class="column">
                         @foreach (var q in Questions)
                         {
-                            <div class="border rounded p-3 mb-2" @key="q.Id">
+                            //Console.WriteLine($"Question {q.Id} type={q.Type}");
+                            <div @key="q.Id">
                                 <DynamicComponent Type="Resolve(q.Type)" Parameters="@(new Dictionary<string, object?>
                                 {
                                     ["Question"] = q,
                                     ["OnQuestionUpdated"] = EventCallback.Factory.Create<Question>(this, OnQuestionUpdated),
-                                    ["OnQuestionDeleted"] = EventCallback.Factory.Create<string>(this, OnQuestionDeleted)
+                                    ["OnQuestionDeleted"] = EventCallback.Factory.Create<string>(this, OnQuestionDeletedAsync)
                                 })" />
                             </div>
                         }
@@ -50,9 +51,15 @@
 
             <!-- FOOTER -->
             <div class="item-content-footer">
-                <button class="btn btn-outline-primary btn-sm" type="button" @onclick="AddOne">Вопрос (один)</button>
-                <button class="btn btn-outline-primary btn-sm ms-2" type="button" @onclick="AddMany">Вопрос (несколько)</button>
-                <button class="btn btn-outline-primary btn-sm ms-2" type="button" @onclick="AddNote">Заметка</button>
+                <div class="item-content-footer-center">
+                    <div class="row-container">
+                        <button class="square-button primary-gray list-ul-icon" type="button" @onclick="AddOne"></button>
+                        <button class="square-button primary-gray list-check-icon" type="button" @onclick="AddMany"></button>
+                        <button class="square-button primary-gray list-ol-icon" type="button" @onclick="AddStep"></button>
+                        <button class="square-button primary-gray chat-square-text-icon" type="button" @onclick="AddNote"></button>
+                       
+                    </div>
+                </div>
             </div>
         </EditForm>
     </div>
@@ -81,14 +88,26 @@ else
         }
     }
 
-    private Type Resolve(string type) => type switch
+   private Type Resolve(string type)
+{
+    if (string.IsNullOrWhiteSpace(type))
+        return typeof(QuestionNoteEdit);
+
+    switch (type.ToLowerInvariant())
     {
-        "one" => typeof(QuestionOneEdit),
-        "many" => typeof(QuestionManyEdit),
-        "note" => typeof(QuestionNoteEdit),
-        "step" => typeof(QuestionStepEdit),
-        _ => typeof(QuestionNoteEdit)
-    };
+        case "one":
+            return typeof(QuestionOneEdit);
+        case "many":
+            return typeof(QuestionManyEdit);
+        case "note":
+            return typeof(QuestionNoteEdit);
+        case "step":
+            return typeof(QuestionStepEdit);
+        default:
+            return typeof(QuestionNoteEdit);
+    }
+}
+
 
     private async Task SaveTest()
     {
@@ -110,19 +129,29 @@ else
     private void AddOne() => AddQuestion("one");
     private void AddMany() => AddQuestion("many");
     private void AddNote() => AddQuestion("note");
+    private void AddStep() => AddQuestion("step");
 
 
-    private void AddQuestion(string type)
+    private async Task AddQuestion(string type)
     {
         var q = new Question
-        {
-            Id = ObjectId.GenerateNewId().ToString(),
-            Type = type,
-            Answers = new List<Answer>()
-        };
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Type = type.ToLowerInvariant(),
+                Answers = new List<Answer>()
+            };
+
         Questions.Add(q);
         Test.Questions ??= new List<string>();
         Test.Questions.Add(q.Id);
+
+        // Сразу сохраняем вопрос в базе
+        await QuestionService.SaveQuestionAsync(q);
+
+        // Обновляем тест в базе
+        await TestService.SaveTestAsync(Test);
+
+        StateHasChanged(); // обновляем UI сразу
     }
 
     private void OnQuestionUpdated(Question q)
@@ -134,13 +163,19 @@ else
         StateHasChanged(); // чтобы UI обновился сразу
     }
 
-    private void OnQuestionDeleted(string id)
+    private async Task OnQuestionDeletedAsync(string id)
     {
         var q = Questions.FirstOrDefault(x => x.Id == id);
         if (q != null)
         {
             Questions.Remove(q);
             Test.Questions?.Remove(id);
+
+            // Сохраняем изменения в тесте сразу
+            await TestService.SaveTestAsync(Test);
+
+            StateHasChanged();
         }
     }
+
 }

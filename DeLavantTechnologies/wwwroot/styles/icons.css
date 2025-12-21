@@ -39,15 +39,15 @@
       mask-image: url('../icons/list-check.svg'); 
     -webkit-mask-image: url('../icons/list-check.svg');
 }
-.list-ol{
+.list-ol-icon{
       mask-image: url('../icons/list-ol.svg'); 
     -webkit-mask-image: url('../icons/list-ol.svg');
 }
-.list-ul{
+.list-ul-icon{
       mask-image: url('../icons/list-ul.svg'); 
     -webkit-mask-image: url('../icons/list-ul.svg');
 }
-.chat-square-text{
+.chat-square-text-icon{
       mask-image: url('../icons/chat-square-text.svg'); 
     -webkit-mask-image: url('../icons/chat-square-text.svg');
 }
@@ -59,6 +59,20 @@
       mask-image: url('../icons/arrow-counterclockwise.svg'); 
     -webkit-mask-image: url('../icons/arrow-counterclockwise.svg');
 }
+.plus-circle-fill-icon{
+      mask-image: url('../icons/plus-circle-fill.svg'); 
+    -webkit-mask-image: url('../icons/plus-circle-fill.svg');
+}
+.dash-circle-fill-icon{
+      mask-image: url('../icons/dash-circle-fill.svg'); 
+    -webkit-mask-image: url('../icons/dash-circle-fill.svg');
+}
+.arrow-right-circle-fill-icon{
+      mask-image: url('../icons/arrow-right-circle-fill.svg'); 
+    -webkit-mask-image: url('../icons/arrow-right-circle-fill.svg');
+}
+
+
 
 .square-icon.courses-icon::after {
     mask-image: url("../icons/search.svg");
@@ -68,7 +82,6 @@
     mask-image: url("../icons/people.svg");
     -webkit-mask-image: url("../icons/people.svg");
 }
-
 .square-icon.users-fill-icon::after {
     mask-image: url("../icons/people-fill.svg");
     -webkit-mask-image: url("../icons/people-fill.svg");
@@ -107,12 +120,12 @@
     background-image: url("../icons/square-eye-slash-gray.svg");
 }
 
-.square-person-blue-icon {
-    background-image: url("../icons/square-person-blue.svg");
+.square-person-gray-icon {
+    background-image: url("../icons/square-person-gray.svg");
 }
 
-.square-pie-chart-purple-icon {
-    background-image: url("../icons/square-pie-chart-purple.svg");
+.square-pie-chart-gray-icon {
+    background-image: url("../icons/square-pie-chart-gray.svg");
 }
 
 .square-trash-red-icon {

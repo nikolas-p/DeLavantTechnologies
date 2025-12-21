@@ -1,6 +1,5 @@
-﻿@page "/course/edit"
-@page "/courses/create"
-@page "/course/edit/{Id}"
+﻿@page "/courses/edit"
+@page "/courses/edit/{Id}"
 @inject ICourseService CourseService
 @inject IStepService StepService
 @inject ITestService TestService
@@ -30,6 +29,8 @@
     @code {
         private void GoToAuth()
         {
+
+            SaveCourse();
             Ui.SetMode(PageMode.List);
             Navigation.NavigateTo("/Auth");
         }
@@ -71,7 +72,7 @@
 {
     <div class="fixed-center-aside open">
     <div class="fixed-center-aside-content">
-        <div class="fixed-center-aside-header">
+        <div class="fixed-right-aside-close">
             <button class="square-button x-icon"
                     @onclick="CourseEditUi.CloseAdditional">
             </button>
@@ -104,11 +105,9 @@
     <div class="item-content-main">
        
         <InputText class="form-control" @bind-Value="Course.Title" aria-placeholder="Название курса"/>
+        <InputTextArea class="form-control" @bind-Value="Course.Description" aria-placeholder="описание" />
         
-        <InputTextArea class="form-control" @bind-Value="Course.Description" aria-placeholder="описание по желанию" />
-        
-
-   
+ 
     @if (Steps.Any())
     {
         <h4>Разделы курса</h4>

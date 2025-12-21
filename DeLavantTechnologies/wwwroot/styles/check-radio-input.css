@@ -105,12 +105,73 @@
 }
 .checkbox-input {
     appearance: none;
+
     width: 2rem;
     height: 2rem;
+    min-width: 2rem;
+    min-height: 2rem;
+
     border: 2px solid var(--primary-red);
-    border-radius: 4rem;
+    border-radius: 50%;   /* ✅ ВАЖНО */
+
     background-color: #fff;
     cursor: pointer;
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+
+    transition:
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
 }
 
+
+
+/* скрываем стандартную радиокнопку */
+.radio-icon input[type="radio"] {
+  display: none;
+}
+.radio-icon label {
+    width: 2rem;
+    height: 2rem;
+    display: inline-block;
+    cursor: pointer;
+
+    background-color: var(--primary-gray); /* серый по умолчанию */
+
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+
+    transition: background-color 0.2s ease;
+}
+.radio-icon input[type="radio"]:checked + label {
+    background-color: var(--primary-purple); /* красный */
+}
+
+.common-icon {
+     mask-image: url("../icons/people.svg");
+    -webkit-mask-image: url("../icons/people.svg");
+}
+.group-icon {
+   mask-image: url("../icons/people-fill.svg");
+    -webkit-mask-image: url("../icons/people-fill.svg");
+}
+
+.individual-icon {
+    mask-image: url("../icons/person-fill.svg");
+    -webkit-mask-image: url("../icons/person-fill.svg");
+}
+
+.ones-icon {
+    mask-image: url("../icons/person.svg");
+    -webkit-mask-image: url("../icons/person.svg");
+}

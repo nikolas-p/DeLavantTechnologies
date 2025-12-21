@@ -6,78 +6,159 @@
 @inject NavigationManager Navigation
 @inject UiState Ui
 @implements IEntityListPage
-
-
-
 @attribute [Authorize(Roles = "Admin")]
-
 
 @if (courses.Count == 0)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Курсов нет...</em></p>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Название</th>
-                <th>Описание</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var course in courses)
-            {
-                <tr>
-                    <td>@course.Title</td>
-                    <td>@course.Description</td>
-                    <td>
-                        <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteCourse(course.Id))">Удалить</button>
-                        <button class="btn btn-primary btn-sm" @onclick="@(() => ViewCourse(course.Id))">Просмотр</button>
-                        <button class="btn btn-secondary btn-sm" @onclick="@(() => EditCourse(course.Id))">Редактировать</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
 
-    
-}
-<button class="btn btn-success" @onclick="CreateCourse">Создать курс</button>
+    <div class="record-sheet">
 
 
-<h3>Текущий поиск</h3>
-<p>@Search</p>
-
-<h3>Параметры фильтров</h3>
-@if (Parameters != null && Parameters.Count > 0)
-{
-    <ul>
-        @foreach (var kvp in Parameters)
+        @foreach (var course in FilteredCourses)
         {
-            <li>
-                @kvp.Key :
-                @if (kvp.Value is IEnumerable<string> list)
-                {
-                    @string.Join(", ", list)
-                }
-                else
-                {
-                    @kvp.Value
-                }
-            </li>
-        }
-    </ul>
-}
-else
-{
-    <p>Нет параметров</p>
-}
+            <div class="record-sheet-recording">
 
+                <button class="circle-button primary-red x-circle-fill-icon @(deletePending.ContainsKey(course.Id) ? "pulse" : "")"
+                @onclick="() => ToggleDelete(course.Id)"></button>
+
+
+
+                <div class="record-sheet-recording-content"  @onclick="@(() => EditCourse(course.Id))">
+                    <div class="short-info">
+
+                        @if (IsCreatedDateOrder)
+                        {
+                            <div class="centered-element">
+                                Создан
+                                <div class="accent-gray">
+                                    <span>
+                                        @ToMoscowTime(course.CreatedAt).ToString("dd.MM HH:mm")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="centered-element">
+                                Изменён
+                                <div class="accent-gray">
+                                    <span>
+                                        @ToMoscowTime(course.LastUpdatedAt).ToString("dd.MM HH:mm")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+
+
+
+                        <div class="centered-element">
+                            Доступ
+                            <div class="accent-red">
+                                <span>
+                                    @(course.AccessType switch
+                                    {
+                                        "Common" => "Общедоступный",
+                                        "Individual" => "Персональный",
+                                        "Group" => "Групповой",
+                                        "Ones" => "Соискателям",
+                                        _ => ""
+                                    })
+                                </span>
+
+                            </div>
+                            <div class="accent-gray">
+                                <span>@(course.IsHidden ? "скрыт" : "открыт")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-block">
+                        @course.Title
+                    </div>
+                </div>
+
+                <button class="circle-button secondary-gray arrow-right-circle-fill-icon"   @onclick="@(() => EditCourse(course.Id))"></button>
+
+            </div>
+        }
+
+    </div>
+}   
 
 @code {
-     private List<Course> courses = new List<Course>();
+
+    private CourseOrder CurrentOrder =>
+    Ui.CurrentState.Parameters.TryGetValue("order", out var value) && value is CourseOrder order
+        ? order
+        : CourseOrder.AZName;
+
+    private bool IsCreatedDateOrder =>
+        CurrentOrder is CourseOrder.CreatedAtNew or CourseOrder.CreatedAtOld;
+
+    private bool IsUpdatedDateOrder =>
+        CurrentOrder is CourseOrder.UpdateToNew or CourseOrder.UpdateToOld;
+
+    private static DateTime ToMoscowTime(DateTime utcDate)
+    {
+        var moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Russian Standard Time" : "Europe/Moscow"
+        );
+
+        return TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.SpecifyKind(utcDate, DateTimeKind.Utc),
+            moscowTimeZone
+        );
+    }
+
+    private Dictionary<string, CancellationTokenSource> deletePending = new();
+
+    private void ToggleDelete(string courseId)
+    {
+        if (deletePending.ContainsKey(courseId))
+        {
+            // Отмена удаления
+            deletePending[courseId].Cancel();
+            deletePending.Remove(courseId);
+            StateHasChanged();
+            return;
+        }
+
+        // Запускаем "подтверждение удаления"
+        var cts = new CancellationTokenSource();
+        deletePending[courseId] = cts;
+        StateHasChanged();
+
+        _ = DeleteWithDelay(courseId, cts.Token);
+    }
+
+    private async Task DeleteWithDelay(string courseId, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(5000, token);
+            await DeleteCourse(courseId);
+        }
+        catch (TaskCanceledException)
+        {
+            // Пользователь отменил
+        }
+        finally
+        {
+            if (deletePending.ContainsKey(courseId))
+            {
+                deletePending.Remove(courseId);
+                StateHasChanged();
+            }
+        }
+    }
+}
+
+@code {
+    private List<Course> courses = new List<Course>();
 
 
     protected override void OnInitialized()
@@ -96,32 +177,51 @@ else
     [Parameter] public string Search { get; set; } = "";
     [Parameter] public Dictionary<string, object> Parameters { get; set; } = new();
 
-   IEnumerable<Course> FilteredCourses
+    IEnumerable<Course> FilteredCourses
     {
         get
         {
             IEnumerable<Course> query = courses;
 
-            /* ===== ПОИСК ===== */
+            // Поиск
             var search = Ui.CurrentState.Search;
             if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(c => c.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+            // Фильтр по категориям
+            if (Ui.CurrentState.Parameters.TryGetValue("categories", out var obj) && obj is HashSet<string> cats && cats.Count > 0)
             {
-                query = query.Where(c =>
-                    c.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(c => cats.Contains(c.AccessType));
+            }
+            // Фильтр по скрытым
+            // Фильтр по скрытым
+            var showHidden =
+                Ui.CurrentState.Parameters.TryGetValue("showHidden", out var hiddenObj)
+                && hiddenObj is bool b && b;
+
+            if (showHidden)
+            {
+                // показываем ТОЛЬКО скрытые
+                query = query.Where(c => c.IsHidden);
+            }
+            else
+            {
+                // по умолчанию показываем ТОЛЬКО доступные
+                query = query.Where(c => !c.IsHidden);
             }
 
-            /* ===== СОРТИРОВКА ===== */
-            if (Ui.CurrentState.Parameters.TryGetValue("order", out var orderObj)
-                && orderObj is CourseOrder order)
+
+            // Сортировка
+            if (Ui.CurrentState.Parameters.TryGetValue("order", out var orderObj) && orderObj is CourseOrder order)
             {
                 query = order switch
-                 {
-                    CourseOrder.CreatedAtNew =>query.OrderBy(c=> c.CreatedAt),
-                    CourseOrder.CreatedAtOld =>query.OrderByDescending(c=> c.CreatedAt),
-                    CourseOrder.UpdateToNew => query.OrderBy(c=>c.LastUpdatedAt),
-                    CourseOrder.UpdateToOld => query.OrderByDescending(c=>c.LastUpdatedAt),
-                    CourseOrder.AZName => query.OrderBy(c=>c.Title),
-                    CourseOrder.ZAName => query.OrderByDescending(c=>c.Title),
+                {
+                    CourseOrder.AZName => query.OrderBy(c => c.Title),
+                    CourseOrder.ZAName => query.OrderByDescending(c => c.Title),
+                    CourseOrder.CreatedAtNew => query.OrderByDescending(c => c.CreatedAt),
+                    CourseOrder.CreatedAtOld => query.OrderBy(c => c.CreatedAt),
+                    CourseOrder.UpdateToNew => query.OrderByDescending(c => c.LastUpdatedAt),
+                    CourseOrder.UpdateToOld => query.OrderBy(c => c.LastUpdatedAt),
                     _ => query
                 };
             }
@@ -129,22 +229,19 @@ else
             return query;
         }
     }
+
    
 
-    private void ViewCourse(string id)
+    @* private void ViewCourse(string id)
     {
-        Navigation.NavigateTo($"/course/{id}");
-    }
+        Navigation.NavigateTo($"/courses/{id}");
+    } *@
 
     private void EditCourse(string id)
     {
-        Navigation.NavigateTo($"/course/edit/{id}");
+        Navigation.NavigateTo($"/courses/edit/{id}");
     }
 
-    private void CreateCourse()
-    {
-        Navigation.NavigateTo("/course/edit");
-    }
 
     private async Task DeleteCourse(string id)
     {

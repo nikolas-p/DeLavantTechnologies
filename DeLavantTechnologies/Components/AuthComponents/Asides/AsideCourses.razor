@@ -3,7 +3,7 @@
 
 <div class="radio-list">
     <InputRadioGroup @bind-Value="SortOrder">
-        
+
         <label class="radio-item">
             <InputRadio Value="CourseOrder.AZName" class="radio-input" />
             <span class="radio-label">По названию: А → Я</span>
@@ -16,12 +16,12 @@
 
         <label class="radio-item">
             <InputRadio Value="CourseOrder.CreatedAtNew" class="radio-input" />
-            <span class="radio-label">По дате входа от сегодняшней</span>
+            <span class="radio-label">Созданы к сегоднашней</span>
         </label>
 
         <label class="radio-item">
             <InputRadio Value="CourseOrder.CreatedAtOld" class="radio-input" />
-            <span class="radio-label">По дате входа к сегодняшней</span>
+            <span class="radio-label">Созданы к старой</span>
         </label>
 
         <label class="radio-item">
@@ -30,7 +30,7 @@
         </label>
 
         <label class="radio-item">
-            <InputRadio Value="CourseOrder.CreatedAtOld" class="radio-input" />
+            <InputRadio Value="CourseOrder.UpdateToOld" class="radio-input" />
             <span class="radio-label">Обновлены давно</span>
         </label>
     </InputRadioGroup>
@@ -49,51 +49,85 @@
         set => Ui.SetParam("order", value);
     }
 
-    
+
 }
-
-
-<h5>Категории</h5>
+<h5>Доступен</h5>
 <div class="radio-list">
-@foreach (var category in CourseCategories)
-{
-    <label class="radio-item">
-        <input type="checkbox" class="checkbox-input"
-               checked="@IsCategorySelected(category)"
-               @onchange="(e) => ToggleCategory(category, e.Value)">
-       <span class="radio-label">@category</span>
-    </label>
-}
+    @foreach (var category in CategoryOptions)
+    {
+        <label class="radio-item">
+            <input type="checkbox"  class="checkbox-input"
+            checked="@IsCategorySelected(category.English)"
+            @onchange="(e) => ToggleCategory(category.English, e.Value)" />
+            <span class="radio-label">@category.Russian</span>
+        </label>
+    }
 </div>
-@code{
-    // Пример категорий
-    private string[] CourseCategories = new[] { "Common", "Hidden", "Ones", "Group", "Personal" };
 
-    // Проверка, выбран ли чекбокс
-    private bool IsCategorySelected(string category)
+
+
+@code {
+    private (string Russian, string English)[] CategoryOptions = new[]
+    {
+        ("Общедоступный", "Common"),
+        ("Соискателям", "Ones"),
+        ("Групповой", "Group"),
+        ("Персональный", "Individual")
+    };
+
+    private bool IsCategorySelected(string english)
     {
         if (Ui.CurrentState.Parameters.TryGetValue("categories", out var obj) && obj is HashSet<string> set)
-        {
-            return set.Contains(category);
-        }
+            return set.Contains(english);
         return false;
     }
 
-    // Переключение чекбокса
-    private void ToggleCategory(string category, object? isCheckedObj)
+    private void ToggleCategory(string english, object? isCheckedObj)
     {
         var isChecked = isCheckedObj as bool? ?? false;
 
         if (!Ui.CurrentState.Parameters.TryGetValue("categories", out var obj) || obj is not HashSet<string> set)
-        {
             set = new HashSet<string>();
-        }
 
         if (isChecked)
-            set.Add(category);
+            set.Add(english);
         else
-            set.Remove(category);
+            set.Remove(english);
 
         Ui.SetParam("categories", set);
     }
+}
+
+<h5>Скрытые</h5>
+<div class="radio-list">
+    <label class="radio-item">
+        <input type="checkbox"
+               class="checkbox-input"
+               checked="@ShowHidden"
+               @onchange="ToggleHidden" />
+        <span class="radio-label">Показывать скрытые</span>
+    </label>
+</div>
+
+@code
+{
+    private bool ShowHidden
+    {
+        get
+        {
+            if (Ui.CurrentState.Parameters.TryGetValue("showHidden", out var value)
+                && value is bool b)
+                return b;
+
+            return false; // по умолчанию скрытые НЕ показываем
+        }
+    }
+
+
+    private void ToggleHidden(ChangeEventArgs e)
+    {
+        var isChecked = e.Value as bool? ?? false;
+        Ui.SetParam("showHidden", isChecked);
+    }
+
 }

@@ -1,5 +1,4 @@
 ﻿@page "/Account/Register"
-@page "/users/edit"
 
 @using System.ComponentModel.DataAnnotations
 @using System.Text
@@ -18,7 +17,7 @@
 @attribute [Authorize(Roles = "Admin")] 
 <PageTitle>Регистрация</PageTitle>
 
-<h1>Регистрация пользователя</h1>
+<h1>Создание пользователя</h1>
 
 <div class="row">
     <div class="col-md-4">
@@ -58,7 +57,8 @@
                 <ValidationMessage For="() => Input.SelectedRole" class="text-danger" />
             </div>
 
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Создать</button>
         </EditForm>
     </div>
     <div class="col-md-6 col-md-offset-2">

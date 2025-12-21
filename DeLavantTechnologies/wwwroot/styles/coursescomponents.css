@@ -91,27 +91,73 @@
     opacity: 1;
     pointer-events: auto;
 }
+.fixed-center-aside-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.center-aside-title {
+  width: 100%;
+  height: 2em;
+  font-size: 2rem;
+
+  display: flex;
+  align-items: center;     /* вертикальное выравнивание текста */
+  justify-content: center; /* горизонтальное */
+
+  text-align: center;
+}
+.two-columns {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1rem;
+}
+.left-column {
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;  /* по горизонтали */
+}
+.right-column {
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;  /* по горизонтали */
+}
+.right-column h1
+{
+    font-size: 2rem;
+    font-weight: var(--weight-bold);
+    align-items: center;
+    height: auto;
+}
+
 
 /* ===== MODAL ===== */
 .fixed-center-aside-content {
     width: 50rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     max-height: calc(100vh - 8rem);
+    height: auto;
 
-    background: #fff;
-    border-radius: 16px;
+    border-radius: 3rem;
     box-shadow: 0 40px 80px rgba(0,0,0,0.35);
 
     padding: 2rem;
 
     animation: scaleIn 0.25s ease;
 }
-
-/* ===== HEADER ===== */
-.fixed-center-aside-header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1rem;
+.fixed-right-aside-close
+{
+   z-index: 300;
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
 }
+
 
 /* ===== ANIMATION ===== */
 @keyframes scaleIn {
@@ -124,7 +170,6 @@
         opacity: 1;
     }
 }
-
 .drag-item {
     display: flex;
     align-items: center;

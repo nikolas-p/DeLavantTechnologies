@@ -1,47 +1,127 @@
 ﻿@using MongoDB.Bson
-<div>
-    <div class="d-flex justify-content-between">
-        <h6>Вопрос с несколькими ответами</h6>
-        <div>
-            <button class="btn btn-sm btn-danger me-1" @onclick="Delete">Удалить</button>
-            <button class="btn btn-sm btn-primary" @onclick="Save">Сохранить</button>
+@using DeLavant.Domain.Tests
+@inject ITestService TestService
+@inject IQuestionService QuestionService
+@rendermode InteractiveServer
+
+@if (Question != null)
+{
+    <div class="item-content">
+        <!-- HEADER -->
+        <div class="item-content-header">
+            <div class="item-content-header-left">
+                <button class="circle-button primary-red x-circle-fill-icon" type="button"  @onclick="Delete"></button>
+            </div>
+            <div class="item-content-header-center">
+                <h6>Несколько ответов</h6>
+            </div>
+            <div class="item-content-header-right">
+                <button class="circle-button primary-purple check-circle-fill-icon" type="button" @onclick="Save"></button>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="item-content-main">
+            <InputTextArea class="form-control mb-2"
+            @bind-Value="Question.Title"
+            placeholder="Текст вопроса"
+            @onblur="Save" />
+
+            @if (Question.Answers == null || !Question.Answers.Any())
+            {
+                <p>Ответы отсутствуют</p>
+            }
+            else
+            {
+                  <div class="column">
+                @foreach (var ans in Question.Answers)
+                {
+                  
+
+                          <div class="column-row-item" @key="ans.Id" >
+
+                            <InputCheckbox class="checkbox-input"
+                            Value="ans.IsCorrect"
+                            ValueChanged="@(async v => await SetIsCorrect(v, ans))"
+                            ValueExpression="() => ans.IsCorrect" />
+                
+                            <InputTextArea class="form-control"
+                            @bind-Value="ans.Value"
+                            @onblur="Save" />
+
+                            <button class="circle-button primary-red x-circle-fill-icon" type="button"
+                            @onclick="() => RemoveAnswer(ans.Id)"></button>
+                        </div>
+                   
+                }
+                 </div>
+            }
+
+        </div>
+
+        <div class="item-content-footer">
+            <div class="item-content-footer-center">
+                <button class="btn btn-sm btn-outline-primary mt-1" type="button" @onclick="AddAnswer">Добавить ответ</button>
+            </div>
         </div>
     </div>
-
-    <InputText class="form-control mb-2" @bind-Value="Question.Title" placeholder="Текст вопроса" />
-
-    @if (Question.Answers != null)
-    {
-        @foreach (var ans in Question.Answers)
-        {
-            <div class="input-group mb-1" @key="ans.Id">
-                <InputCheckbox @bind-Value="ans.IsCorrect" />
-                <InputText class="form-control" @bind-Value="ans.Value" />
-                <button class="btn btn-sm btn-danger" @onclick="() => RemoveAnswer(ans.Id)">x</button>
-            </div>
-        }
-    }
-
-    <button class="btn btn-sm btn-outline-primary mt-1" @onclick="AddAnswer">Добавить ответ</button>
-</div>
+}
+else
+{
+    <h3>Создавайте</h3>
+}
 
 @code {
     [Parameter] public Question Question { get; set; }
     [Parameter] public EventCallback<Question> OnQuestionUpdated { get; set; }
     [Parameter] public EventCallback<string> OnQuestionDeleted { get; set; }
 
+    // Добавление нового ответа
     private void AddAnswer()
     {
         Question.Answers ??= new List<Answer>();
-        Question.Answers.Add(new Answer { Id = ObjectId.GenerateNewId().ToString(), Value = "", IsCorrect = false });
+        Question.Answers.Add(new Answer
+        {
+            Id = ObjectId.GenerateNewId().ToString(),
+            Value = "",
+            IsCorrect = false
+        });
     }
 
-    private void RemoveAnswer(string id)
+    private bool GetIsCorrect(Answer ans) => ans.IsCorrect;
+
+    private async Task SetIsCorrect(bool value, Answer ans)
     {
-        var a = Question.Answers.FirstOrDefault(x => x.Id == id);
-        if (a != null) Question.Answers.Remove(a);
+        ans.IsCorrect = value;
+        await Save();
     }
 
-    private async Task Save() => await OnQuestionUpdated.InvokeAsync(Question);
-    private async Task Delete() => await OnQuestionDeleted.InvokeAsync(Question.Id);
+
+    // Удаление ответа
+    private async Task RemoveAnswer(string id)
+    {
+        var ans = Question.Answers.FirstOrDefault(a => a.Id == id);
+        if (ans != null)
+        {
+            Question.Answers.Remove(ans);
+            await Save(); // сохраняем после удаления
+        }
+    }
+
+    // Сохранение изменений в БД
+    private async Task Save()
+    {
+        if (Question == null) return;
+
+        await QuestionService.SaveQuestionAsync(Question);
+        await OnQuestionUpdated.InvokeAsync(Question);
+        Console.WriteLine($"Saved question {Question.Id}");
+    }
+
+    // Удаление вопроса
+    private async Task Delete()
+    {
+        await QuestionService.DeleteQuestionAsync(Question.Id);
+        await OnQuestionDeleted.InvokeAsync(Question.Id);
+    }
 }

@@ -36,6 +36,9 @@ namespace DeLavant.Application.Tests
         /* ================== UPDATE ================== */
         public async Task SaveTestAsync(Test test)
         {
+            if (test == null)
+                throw new ArgumentNullException(nameof(test));
+
             var existing = string.IsNullOrEmpty(test.Id)
                 ? null
                 : await _testRepository.GetTestByIdAsync(test.Id);

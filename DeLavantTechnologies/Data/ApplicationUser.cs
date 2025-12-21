@@ -17,7 +17,7 @@ namespace DeLavantTechnologies.Data
         /// <summary>
         /// Должности: "Администратор", "Редактор", "Оператор"
         /// </summary>
-        public List<Guid> Positions { get; set; } = new(); 
+        public List<string> Positions { get; set; } = new(); 
 
         /// <summary>
         /// Права (дополнительные Claims)

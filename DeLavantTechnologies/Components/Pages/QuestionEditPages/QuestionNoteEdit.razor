@@ -1,20 +1,68 @@
-﻿<div>
-    <div class="d-flex justify-content-between">
-        <h6>Заметка</h6>
-        <div>
-            <button class="btn btn-sm btn-danger me-1" @onclick="Delete">Удалить</button>
-            <button class="btn btn-sm btn-primary" @onclick="Save">Сохранить</button>
+﻿@using MongoDB.Bson
+@using DeLavant.Domain.Tests
+@inject IQuestionService QuestionService
+@rendermode InteractiveServer
+
+@if (Question != null)
+{
+    <div class="item-content">
+        <!-- HEADER -->
+        <div class="item-content-header">
+            <div class="item-content-header-left">
+                <button class="circle-button primary-red x-circle-fill-icon" type="button"  @onclick="Delete"></button>
+            </div>
+            <div class="item-content-header-center">
+                <h6>Развёрнутый ответ</h6>
+            </div>
+            <div class="item-content-header-right">
+                <button class="circle-button primary-purple check-circle-fill-icon" type="button" @onclick="Save"></button>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="item-content-main">
+            <InputTextArea class="form-control mb-2"
+            @bind-Value="Question.Title"
+            placeholder="Текст вопроса для развёрнутого ответа"
+            @onblur="async _ => await Save()" />
         </div>
     </div>
-
-    <InputText class="form-control mb-2" @bind-Value="Question.Title" placeholder="Текст заметки" />
-</div>
+}
+else
+{
+    <h3>создавайте</h3>
+}
 
 @code {
     [Parameter] public Question Question { get; set; }
     [Parameter] public EventCallback<Question> OnQuestionUpdated { get; set; }
     [Parameter] public EventCallback<string> OnQuestionDeleted { get; set; }
 
-    private async Task Save() => await OnQuestionUpdated.InvokeAsync(Question);
-    private async Task Delete() => await OnQuestionDeleted.InvokeAsync(Question.Id);
+        protected override async Task OnInitializedAsync()
+{
+    if (!string.IsNullOrEmpty(Question.Id))
+    {
+        Question = await QuestionService.GetQuestionByIdAsync(Question.Id);
+    }
+}
+
+
+ 
+       private async Task Save()
+    {
+    if (Question != null)
+    {
+        await QuestionService.SaveQuestionAsync(Question); // сохраняем в БД
+        await OnQuestionUpdated.InvokeAsync(Question);    // уведомляем родителя
+        Console.WriteLine($"Saved question {Question.Id}");
+    }
+    }
+
+    
+
+    private async Task Delete()
+    {
+        if (Question != null)
+            await OnQuestionDeleted.InvokeAsync(Question.Id);
+    }
 }
