@@ -1,68 +1,59 @@
 .auth-layout {
-    height: 100vh;
-    overflow: hidden; /* родитель НЕ скроллится */
-    background: #F2F2F2;
+  height: 100vh;
+  overflow: hidden; /* родитель НЕ скроллится */
+  background: #f2f2f2;
 
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .auth-shell-content {
-    overflow-y: auto;      
-    overflow-x: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-    min-height: 100vh;
-    height: auto;
-    width: 100%;
-    padding-top: 4rem;
-    box-sizing: border-box;
- 
+  min-height: 100vh;
+  height: auto;
+  width: 100%;
+  padding-top: 4rem;
+  box-sizing: border-box;
 }
-
-
-
 /* SIDE PANELS (общие) */
 .side-panel {
-    position: fixed;
-    top: 4rem;
-    width: 26rem;
-    height: calc(100vh - 4rem);
-    background: #f8f8f8ab;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    z-index: 150;
-    transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+  position: fixed;
+  top: 4rem;
+  width: 26rem;
+  height: calc(100vh - 4rem);
+  background: #f8f8f8ab;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  z-index: 150;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* LEFT */
 .side-panel.left {
-    box-shadow:
-    2px 0 4px rgba(0, 0, 0, 0.08),
-    6px 0 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08), 6px 0 12px rgba(0, 0, 0, 0.12);
 
-    left: 0;
-    transform: translateX(-100%);
+  left: 0;
+  transform: translateX(-100%);
 }
 .side-panel.left.open {
-
-    transform: translateX(0);
+  transform: translateX(0);
 }
 
 /* RIGHT */
 .side-panel.right {
-    padding-left: 2rem;
-    padding: 1rem;
-    box-shadow:
-    -2px 0 4px rgba(0, 0, 0, 0.08),
-    -6px 0 12px rgba(0, 0, 0, 0.12);
+  padding-left: 2rem;
+  padding: 1rem;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.08), -6px 0 12px rgba(0, 0, 0, 0.12);
 
-    right: 0;
-    transform: translateX(100%);
+  right: 0;
+  transform: translateX(100%);
 }
 .side-panel.right.open {
-    transform: translateX(0);
+  transform: translateX(0);
 }

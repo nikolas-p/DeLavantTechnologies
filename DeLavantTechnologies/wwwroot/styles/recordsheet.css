@@ -1,0 +1,93 @@
+/* Основной контейнер */
+.record-sheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  margin-top: 3rem;
+  width: 70vw; 
+  max-width: 55rem; 
+  min-width: 25rem; 
+  box-sizing: border-box;
+  gap: 1rem;
+}
+.record-sheet-recording {
+  display: flex;
+  flex-direction: row;
+  align-items: center; 
+  justify-content: center; 
+  width: auto;
+  gap: 1rem; 
+}
+.record-sheet-recording-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+
+  min-width: 45rem;
+  box-sizing: border-box;
+  background: rgb(255, 255, 255);
+  padding: 1rem 2rem;
+  border-radius: 2rem;
+  font-family: var(--font-nunito), sans-serif;
+  font-weight: var(--weight-extrabold);
+}
+.short-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  width: auto;
+  gap: 1rem;
+  height: auto;
+  margin-bottom: 1rem;
+}
+.short-info .centered-element {
+  gap: 1rem;
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  border-radius: 2rem;
+  padding: 0.4rem 0.4rem 0.4rem 2rem; 
+  box-sizing: border-box; 
+
+  height: auto;
+
+  background: #f2f2f2ad;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.2);
+}
+.short-info .centered-element .accent {
+  justify-content: center; 
+  align-items: center; 
+  border-radius: 1rem;
+  padding: 0.2rem 3rem;
+  background: rgba(222, 222, 222, 0.558);
+}
+.short-info .centered-element .accent-red {
+  display: inline-flex; 
+  justify-content: center; 
+  align-items: center;
+  border-radius: 1rem;
+  padding: 0.2rem 1rem;
+  background: var(--primary-red);
+  color: white;
+  width: auto;
+  min-width: 6rem;
+  max-width: 15rem; 
+  text-align: center;
+
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
+.short-info .centered-element .accent-gray {
+  justify-content: center; 
+  align-items: center; 
+  border-radius: 1rem;
+  padding: 0.2rem 1rem;
+  background: var(--secondary-gray);
+  color: white;
+  width: auto;
+  min-width: 6rem;
+  text-align: center;
+}

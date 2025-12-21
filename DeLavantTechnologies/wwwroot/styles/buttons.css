@@ -1,0 +1,51 @@
+.course-button {
+    width: 10rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.course-button.completed {
+    background-color: var(--primary-green);
+    color: white;
+}
+
+.course-button.not-completed {
+    background-color: white;
+    border: 1px solid var(--primary-purple);
+    color: var(--primary-purple);
+}
+
+.course-button:hover {
+    filter: brightness(0.85);
+}
+
+
+/* Контейнер кнопки */
+.button-container {
+    width: 100%;               
+    display: flex;
+    justify-content: center;   
+    margin: 1rem 0;            
+}
+.centered-button {
+    background-color: var(--primary-purple); 
+    color: white;                            
+    border: none;
+    border-radius: 3rem;                  
+    padding: 0.75rem 1.5rem;               
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;            
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2); 
+}
+/* Эффект нажатия */
+.centered-button:active {
+    filter: brightness(60%);   /* уменьшение насыщенности */
+    opacity: 0.6;              /* полупрозрачность */
+    transform: scale(0.98);    /* легкое сжатие кнопки */
+}
